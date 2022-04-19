@@ -1,0 +1,530 @@
+openapi: "3.0.0"
+info:
+  title: "Yondero API"
+  version: "0.0.1"
+
+servers:
+  - url: "https://localhost:8080/api/v1"
+
+paths:
+  /:
+    get:
+      tags:
+        - "Endpoints"
+      description: "Get all the available endpoints"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/endpoints"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
+  /item/cite:
+    get:
+      parameters:
+        - in: header
+          name: body
+          required: true
+          schema:
+            type: string
+            $ref: "#/components/schemas/fetch_header"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/bibtex"
+
+        404:
+          description: "Not found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404"
+
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
+  /item/{uid}:
+    get:
+      description: Fetch an item by its uid
+
+      parameters:
+        - in: path
+          name: uid
+          required: true
+          schema:
+            type: string
+            $ref: "#/components/schemas/uid"
+        - in: header
+          name: session_id
+          required: true
+          schema:
+            type: string
+            $ref: "#/components/schemas/session_id"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/item"
+
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403"
+
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404"
+
+        500:
+          description: "Internal Server Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
+  /search:
+    post:
+      description: Search for own items
+      parameters:
+        - in: header
+          name: search_query
+          required: true
+          schema:
+            type: object
+            properties:
+              query:
+                type: string
+                description: "The query to search for"
+              limit:
+                type: integer
+                description: "The maximum number of results to return"
+              offset:
+                type: integer
+                description: "The offset to start the results from"
+              sort:
+                type: string
+                description: "The field to sort the results by"
+              order:
+                type: string
+                description: "The order to sort the results by"
+        - in: header
+          name: session_id
+          required: true
+          schema:
+            $ref: "#/components/schemas/session_id"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/search_results"
+
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401"
+
+        404:
+          description: "No results found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404"
+
+        500:
+          description: "Internal server "
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
+  /item/upload:
+    post:
+      description: upload PDF
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "The file to upload"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/upload_success"
+
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401"
+
+        409:
+          description: "Conflict"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/409"
+
+        500:
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
+  /item/{uid}/download:
+    post:
+      description: download PDF of an article
+      parameters:
+        - in: path
+          name: uid
+          required: true
+          schema:
+            type: string
+            $ref: "#/components/schemas/uid"
+        - in: header
+          name: session_id
+          required: true
+          schema:
+            type: string
+            $ref: "#/components/schemas/session_id"
+
+      responses:
+        200:
+          description: Download PDF
+          content:
+            file:
+              schema:
+                type: string
+                format: binary
+                description: "The file to download"
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401"
+
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403"
+
+        404:
+          description: "Not Found"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/404"
+
+        500:
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
+  /login:
+    post:
+      parameters:
+        - in: header
+          name: body
+          required: true
+          schema:
+            $ref: "#/components/schemas/userdata"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/session_id"
+
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403"
+
+  /logout:
+    post:
+      parameters:
+        - in: header
+          name: session_id
+          required: true
+          schema:
+            type: string
+            $ref: "#/components/schemas/session_id"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200"
+
+        500:
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
+components:
+  schemas:
+    uid:
+      type: string
+      example: "1"
+
+    bibtex:
+      example: "@article{10.2307/1969529,\n
+        ISSN = {0003486X},\n
+        URL = {http://www.jstor.org/stable/1969529},\n
+        author = {John Nash},\n
+        journal = {Annals of Mathematics},\n
+        number = {2},\n
+        pages = {286--295},\n
+        publisher = {Annals of Mathematics},\n
+        title = {Non-Cooperative Games},\n
+        urldate = {2022-04-19},\n
+        volume = {54},\n
+        year = {1951}\n
+        }"
+
+    endpoints:
+      type: object
+      properties:
+        endpoints:
+          type: array
+          items:
+            type: string
+            example:
+              - "GET: /item/cite"
+              - "GET: /item/{uid}"
+              - "POST: /item/{uid}/download"
+              - "POST: /item/{uid}/upload"
+              - "POST: /item/search"
+              - "POST: /login"
+              - "POST: /logout"
+
+    article:
+      type: object
+      properties:
+        doi:
+          type: string
+          example: "10.2307/1969529"
+        title:
+          type: string
+          example: "Non-Cooperative Games"
+        authors:
+          type: array
+          items:
+            type: string
+            example: "John Nash"
+        journal:
+          type: string
+          example: "Annals of Mathematics"
+        volume:
+          type: string
+          example: "54"
+        issue:
+          type: string
+          example: "2"
+        pages:
+          type: string
+          example: "286--295"
+        year:
+          type: string
+          example: "1951"
+        url:
+          type: string
+          example: "http://www.jstor.org/stable/1969529"
+
+    doi:
+      type: string
+      example: "10.2307/1969529"
+
+    fetch_header:
+      type: object
+      required:
+        - doi
+      properties:
+        doi:
+          type: string
+          example: "10.2307/1969529"
+        format:
+          type: string
+          default: "bibtex"
+          example:
+            - "bibtex"
+
+    search_results:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/article"
+        total:
+          type: integer
+          example: "1"
+
+    upload_success:
+      type: object
+      properties:
+        message:
+          type: object
+          example:
+            message: "Success - PDF uploaded"
+            id: "1"
+
+    500:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Server Internal Error"
+
+    404:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Not Found"
+
+    item:
+      type: object
+      properties:
+        uid:
+          type: string
+          example: "1"
+        doi:
+          type: string
+          example: "10.2307/1969529"
+        title:
+          type: string
+          example: "Non-Cooperative Games"
+        authors:
+          type: array
+          items:
+            type: string
+            example: "John Nash"
+        journal:
+          type: string
+          example: "Annals of Mathematics"
+        volume:
+          type: string
+          example: "54"
+        issue:
+          type: string
+          example: "2"
+        pages:
+          type: string
+          example: "286--295"
+        year:
+          type: string
+          example: "1951"
+        type_of_doc:
+          type: string
+          example: "article"
+        url:
+          type: string
+          example: "http://www.jstor.org/stable/1969529"
+        read:
+          type: boolean
+          example: "false"
+        note:
+          type: string
+          example: "This is a note"
+        file_id:
+          type: string
+          example: "1"
+        added_at:
+          type: string
+          example: "2020-04-19T12:00:00.000Z"
+
+    401:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unauthorized"
+
+    409:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Conflict"
+
+    userdata:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "john"
+        password:
+          type: string
+          example: "password(plain)"
+
+    403:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Forbidden"
+
+    200:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Success"
+
+    session_id:
+      type: object
+      properties:
+        session_id:
+          type: string
+          example: "session_id"

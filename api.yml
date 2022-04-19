@@ -27,13 +27,14 @@ paths:
                 $ref: "#/components/schemas/500"
 
   /item/cite:
-    get:
+    post:
+      tags:
+        - "Item"
       parameters:
         - in: header
           name: body
           required: true
           schema:
-            type: string
             $ref: "#/components/schemas/fetch_header"
 
       responses:
@@ -58,17 +59,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
-  /item/{uid}:
-    get:
-      description: Fetch an item by its uid
+  /item/{item_id}:
+    post:
+      tags:
+        - "Item"
+      description: Fetch an item by its item_id
 
       parameters:
         - in: path
-          name: uid
+          name: item_id
           required: true
           schema:
             type: string
-            $ref: "#/components/schemas/uid"
+            $ref: "#/components/schemas/item_id"
         - in: header
           name: session_id
           required: true
@@ -167,6 +170,8 @@ paths:
 
   /item/upload:
     post:
+      tags:
+        - "Item"
       description: upload PDF
       requestBody:
         content:
@@ -208,16 +213,18 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
-  /item/{uid}/download:
+  /item/{item_id}/download:
     post:
+      tags:
+        - "Item"
       description: download PDF of an article
       parameters:
         - in: path
-          name: uid
+          name: item_id
           required: true
           schema:
             type: string
-            $ref: "#/components/schemas/uid"
+            $ref: "#/components/schemas/item_id"
         - in: header
           name: session_id
           required: true
@@ -264,6 +271,8 @@ paths:
 
   /login:
     post:
+      tags:
+        - user
       parameters:
         - in: header
           name: body
@@ -288,6 +297,8 @@ paths:
 
   /logout:
     post:
+      tags:
+        - user
       parameters:
         - in: header
           name: session_id
@@ -311,9 +322,42 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
+  /item/all:
+    post:
+      tags:
+        - "Item"
+      description: Fetch all items
+      parameters:
+        - in: header
+          name: userid
+          required: true
+          schema:
+            $ref: "#/components/schemas/user_id"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/all_items"
+
+        403:
+          description: "Forbidden"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/403"
+
+        500:
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
 components:
   schemas:
-    uid:
+    item_id:
       type: string
       example: "1"
 
@@ -341,9 +385,9 @@ components:
             type: string
             example:
               - "GET: /item/cite"
-              - "GET: /item/{uid}"
-              - "POST: /item/{uid}/download"
-              - "POST: /item/{uid}/upload"
+              - "GET: /item/{item_id}"
+              - "POST: /item/{item_id}/download"
+              - "POST: /item/{item_id}/upload"
               - "POST: /item/search"
               - "POST: /login"
               - "POST: /logout"
@@ -393,11 +437,8 @@ components:
         doi:
           type: string
           example: "10.2307/1969529"
-        format:
-          type: string
-          default: "bibtex"
-          example:
-            - "bibtex"
+        style:
+          example: "bibtex"
 
     search_results:
       type: object
@@ -436,7 +477,7 @@ components:
     item:
       type: object
       properties:
-        uid:
+        item_id:
           type: string
           example: "1"
         doi:
@@ -508,6 +549,10 @@ components:
           type: string
           example: "password(plain)"
 
+    user_id:
+      type: string
+      example: "1"
+
     403:
       type: object
       properties:
@@ -528,3 +573,11 @@ components:
         session_id:
           type: string
           example: "session_id"
+
+    all_items:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/item"

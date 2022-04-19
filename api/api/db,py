@@ -1,0 +1,70 @@
+import psycopg2
+
+db_donfig = {
+    'host': 'localhost',
+    'port': 5432,
+    'dbname': 'yondero',
+    'user': 'yondero',
+    'password': 'yondero'
+
+
+}
+conn = psycopg2.connect(**db_donfig)
+
+
+def init_db():
+    #create db: item,pdf,user
+    with conn.cursor() as cur:
+        cur.execute('''
+        CREATE TABLE IF NOT EXISTS item (
+            item_id TEXT PRIMARY KEY,
+            uid TEXT,
+            title TEXT,
+            authors TEXT,
+            year INTEGER,
+            journal TEXT,
+            volume TEXT,
+            issue TEXT,
+            pages TEXT,
+            doi TEXT,
+            url TEXT,
+            abstract TEXT,
+            keywords TEXT,
+            tags TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+        cur.execute('''
+        CREATE TABLE IF NOT EXISTS pdf (
+            item_id TEXT PRIMARY KEY,
+            pdf BYTEA
+        )
+        ''')
+        cur.execute('''
+        CREATE TABLE IF NOT EXISTS user (
+            uid TEXT PRIMARY KEY,
+            name TEXT,
+            email TEXT,
+            password TEXT,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        )
+        ''')
+        conn.commit()
+
+
+
+def save_pdf(item_id: str, pdf: bytes) -> None:
+    '''
+    save PDF to database
+    '''
+    with conn.cursor() as cur:
+        cur.execute(
+            '''
+            INSERT INTO pdf (item_id, pdf)
+            VALUES (%s, %s)
+            ON CONFLICT (item_id)
+            DO UPDATE SET pdf = %s
+            ''',
+            (item_id, pdf, pdf)
+        )
+        conn.commit()

@@ -1,4 +1,3 @@
-from msilib.schema import Binary
 from os import abort
 
 from flask import Blueprint, Flask, jsonify, request, url_for
@@ -24,7 +23,7 @@ def root() -> object:
         "/item/{uid}",  # POST
         "/item/{uid}/download",  # POST
         "/item/{uid}/upload",  # POST
-        "/item/{uid}/delete", # POST
+        "/item/{uid}/delete",  # POST
         "/register",
         "/login",
         "/logout",
@@ -69,6 +68,7 @@ def upload_pdf(item_id: str):
 
     return "OK"
 
+
 @url_api.route('/login', methods=['POST'])
 def login():
     '''
@@ -88,6 +88,7 @@ def login():
     else:
         abort(401)
 
+
 @url_api.route('/logout', methods=['POST'])
 def logout():
     '''
@@ -95,6 +96,7 @@ def logout():
     '''
     logout_user()
     return "OK"
+
 
 @url_api.route('/register', methods=['POST'])
 def register():
@@ -113,9 +115,8 @@ def register():
     if user is None:
         abort(500)
 
-
-
     return "OK"
+
 
 @login_required
 @url_api.route('/item/<item_id>/delete', methods=['POST'])
@@ -139,12 +140,10 @@ def cite_item():
     cite item
     '''
     req_body = request.get_json()
-    doi=req_body['doi']
+    doi = req_body['doi']
 
-    uid=login_user.get_id()
+    uid = login_user.get_id()
 
     item = postgres.create_item(uid, doi)
     if item is None:
         abort(404)
-
-    

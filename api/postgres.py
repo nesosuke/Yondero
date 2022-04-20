@@ -2,11 +2,11 @@ import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db_config = {
-    'host': 'localhost',
+    'host': 'db',
     'port': 5432,
     'dbname': 'yondero',
-    'user': 'yondero',
-    'password': 'yondero'
+    'user': 'postgres',
+    'password': 'postgres'
 
 
 }
@@ -17,9 +17,9 @@ def init_db():
     # create db: item,pdf,user
     with conn.cursor() as cur:
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS item (
-            item_id TEXT PRIMARY KEY AUTOINCREMENT,
-            user_id TEXT,
+        CREATE TABLE IF NOT EXISTS items (
+            item_id SERIAL PRIMARY KEY,
+            user_id TEXT NOT NULL,
             title TEXT,
             authors TEXT,
             year INTEGER,
@@ -36,18 +36,18 @@ def init_db():
         )
         ''')
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS pdf (
-            object_id TEXT PRIMARY KEY AUTOINCREMENT,
-            item_id TEXT PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS pdfs (
+            object_id SERIAL PRIMARY KEY,
+            item_id SERIAL NOT NULL,
             pdf BYTEA
         )
         ''')
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS user (
-            user_id TEXT PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            email TEXT UNIQUE,
-            password TEXT,
+        CREATE TABLE IF NOT EXISTS users (
+            user_id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
         ''')

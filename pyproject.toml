@@ -7,6 +7,7 @@ authors = ["nesosuke <neso@neso.tech>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 Flask = "^2.1.1"
+Flask-Cors = "^3.0.10"
 
 [tool.poetry.dev-dependencies]
 autopep8 = "^1.6.0"

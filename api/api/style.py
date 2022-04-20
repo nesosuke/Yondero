@@ -1,5 +1,3 @@
-# style from bibtex to other
-
 from bibtexparser.bparser import BibTexParser
 
 # bibtex_str = """@article{10.2307/1969529,

@@ -6,7 +6,7 @@ from flask_cors import CORS
 from flask_login import (LoginManager, current_user, login_required,
                          login_user, logout_user)
 
-from .api import bibtex,db
+from . import postgres, style
 
 api = Flask(__name__)
 CORS(api)
@@ -24,8 +24,8 @@ def root() -> object:
         "/item/{uid}",  # POST
         "/item/{uid}/download",  # POST
         "/item/{uid}/upload",  # POST
-        # "/item/{uid}/delete", # POST
-        # "/register",
+        "/item/{uid}/delete", # POST
+        "/register",
         "/login",
         "/logout",
     ]
@@ -35,47 +35,13 @@ def root() -> object:
 
 
 @login_required
-@url_api.route('/item/cite', methods=['POST'])
-def return_cite() -> str:
-    '''
-    return citation text for an item
-    '''
-    req_body = request.get_json()
-    doi = req_body['doi']
-    style = req_body['style']
-
-    itemdata = db.get_item_data_from_doi(doi)
-    if itemdata is None:
-        abort(404)
-
-    res = bibtex.bibtex_dump(itemdata)
-
-    return res
-
-
-@login_required
-@url_api.route('/item/<item_id>', methods=['POST'])
-def return_itemdata(item_id: str) -> dict:
-    '''
-    return item data
-    '''
-    itemdata = db.get_item_data_from_uid(item_id)
-    if itemdata is None:
-        abort(404)
-
-    res = bibtex.bibtex_dump(itemdata)
-
-    return res
-
-
-@login_required
 @url_api.route('/item/<uid>/download', methods=['POST'])
-def download_item(item_id: str):
+def download_pdf(item_id: str):
     '''
     give PDF to client
     '''
 
-    pdffile = db.get_pdf(item_id)  # TODO
+    pdffile = postgres.get_pdf(item_id)  # TODO
     if pdffile is None:
         abort(404)
 
@@ -84,7 +50,7 @@ def download_item(item_id: str):
 
 @login_required
 @url_api.route('/item/<uid>/upload', methods=['POST'])
-def upload_item(item_id: str):
+def upload_pdf(item_id: str):
     '''
     upload PDF to server
     '''
@@ -93,13 +59,92 @@ def upload_item(item_id: str):
     if pdf is None:
         abort(400)
 
-    if db.get_pdf(item_id) is not None:
+    if postgres.get_pdf(item_id) is not None:
         abort(409)
 
-    db.upload_pdf(item_id, pdf)
+    postgres.save_pdf(item_id, pdf)
 
-    if db.get_pdf(item_id) is None:
+    if postgres.get_pdf(item_id) is None:
         abort(500)
 
     return "OK"
 
+@url_api.route('/login', methods=['POST'])
+def login():
+    '''
+    login
+    '''
+    req_body = request.get_json()
+    username = req_body['username']
+    password = req_body['password']
+
+    user = postgres.get_user(username)
+    if user is None:
+        abort(404)
+
+    if user.check_password(password):
+        login_user(user)
+        return "OK"
+    else:
+        abort(401)
+
+@url_api.route('/logout', methods=['POST'])
+def logout():
+    '''
+    logout
+    '''
+    logout_user()
+    return "OK"
+
+@url_api.route('/register', methods=['POST'])
+def register():
+    '''
+    register
+    '''
+    req_body = request.get_json()
+    username = req_body['username']
+    password = req_body['password']
+
+    user = postgres.get_user(username)
+    if user is not None:
+        abort(409)
+
+    user = postgres.create_user(username, password)
+    if user is None:
+        abort(500)
+
+
+
+    return "OK"
+
+@login_required
+@url_api.route('/item/<item_id>/delete', methods=['POST'])
+def delete_item(item_id: str):
+    '''
+    delete item
+    '''
+    if postgres.get_item(item_id) is None:
+        abort(404)
+
+    if postgres.delete_item(item_id) is None:
+        abort(500)
+
+    return "OK"
+
+
+@login_required
+@url_api.route('/item/cite', methods=['POST'])
+def cite_item():
+    '''
+    cite item
+    '''
+    req_body = request.get_json()
+    doi=req_body['doi']
+
+    uid=login_user.get_id()
+
+    item = postgres.create_item(uid, doi)
+    if item is None:
+        abort(404)
+
+    

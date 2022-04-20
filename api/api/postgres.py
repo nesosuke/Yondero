@@ -1,7 +1,7 @@
 import psycopg2
-from werkzeug.security import generate_password_hash,check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
-db_donfig = {
+db_config = {
     'host': 'localhost',
     'port': 5432,
     'dbname': 'yondero',
@@ -10,16 +10,16 @@ db_donfig = {
 
 
 }
-conn = psycopg2.connect(**db_donfig)
+conn = psycopg2.connect(**db_config)
 
 
 def init_db():
-    #create db: item,pdf,user
+    # create db: item,pdf,user
     with conn.cursor() as cur:
         cur.execute('''
         CREATE TABLE IF NOT EXISTS item (
             item_id TEXT PRIMARY KEY AUTOINCREMENT,
-            uid TEXT,
+            user_id TEXT,
             title TEXT,
             authors TEXT,
             year INTEGER,
@@ -44,15 +44,14 @@ def init_db():
         ''')
         cur.execute('''
         CREATE TABLE IF NOT EXISTS user (
-            uid TEXT PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            email TEXT,
+            user_id TEXT PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            email TEXT UNIQUE,
             password TEXT,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
         ''')
         conn.commit()
-
 
 
 def save_pdf(item_id: str, pdf: bytes) -> str:
@@ -64,10 +63,8 @@ def save_pdf(item_id: str, pdf: bytes) -> str:
             '''
             INSERT INTO pdf (item_id, pdf)
             VALUES (%s, %s)
-            ON CONFLICT (item_id)
-            DO UPDATE SET pdf = %s
-            ''',
-            (item_id, pdf, pdf)
+                        ''',
+            (item_id, pdf)
         )
         conn.commit()
 
@@ -95,6 +92,7 @@ def get_pdf(item_id: str) -> bytes:
             return None
         return row[0]
 
+
 def get_user(username):
     '''
     get user
@@ -112,30 +110,30 @@ def get_user(username):
         return row
 
 
-
-def create_user(username,password,email):
+def create_user(username, password, email):
     '''
     create user
     '''
-    password=generate_password_hash(password)
+    password = generate_password_hash(password)
     with conn.cursor() as cur:
         cur.execute(
             '''
             INSERT INTO user (username,password,email)
             VALUES (%s, %s, %s)
             ''',
-            (username,password,email)
+            (username, password, email)
         )
         conn.commit()
 
         # check if user created
-        uid = cur.fetchone()['uid']
-    if uid is None:
+        user_id = cur.fetchone()['user_id']
+    if user_id is None:
         return None
-    
+
     return 'OK'
 
-def check_password(username,password):
+
+def check_password(username, password):
     '''
     check password
     '''
@@ -149,31 +147,33 @@ def check_password(username,password):
         row = cur.fetchone()
         if row is None:
             return None
-        if row['password']==check_password_hash(password):
+        if row['password'] == check_password_hash(password):
             return True
         else:
             return False
 
-def change_password(username,password):
+
+def change_password(username, password):
     '''
     change password
     '''
-    password=generate_password_hash(password)
+    password = generate_password_hash(password)
     with conn.cursor() as cur:
         cur.execute(
             '''
             UPDATE user SET password = %s WHERE username = %s
             ''',
-            (password,username)
+            (password, username)
         )
         conn.commit()
 
         # check if user created
-        uid = cur.fetchone()['uid']
-    if uid is None:
+        user_id = cur.fetchone()['user_id']
+    if user_id is None:
         return None
-    
+
     return 'OK'
+
 
 def get_item(item_id):
     '''
@@ -191,17 +191,19 @@ def get_item(item_id):
             return None
         return row
 
-def save_item(uid,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags):
+
+def save_item(user_id, title, authors, year, journal, volume, issue, pages, doi, url, abstract, keywords, tags):
     '''
     save item
     '''
     with conn.cursor() as cur:
         cur.execute(
             '''
-            INSERT INTO item (uid,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags)
+            INSERT INTO item (user_id,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''',
-            (uid,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags)
+            (user_id, title, authors, year, journal, volume,
+             issue, pages, doi, url, abstract, keywords, tags)
         )
         conn.commit()
 
@@ -209,20 +211,21 @@ def save_item(uid,title,authors,year,journal,volume,issue,pages,doi,url,abstract
         item_id = cur.fetchone()['item_id']
     if item_id is None:
         return None
-    
+
     return 'OK'
 
 
-def update_item(item_id,uid,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags):
+def update_item(item_id, user_id, title, authors, year, journal, volume, issue, pages, doi, url, abstract, keywords, tags):
     '''
     update item
     '''
     with conn.cursor() as cur:
         cur.execute(
             '''
-            UPDATE item SET uid = %s, title = %s, authors = %s, year = %s, journal = %s, volume = %s, issue = %s, pages = %s, doi = %s, url = %s, abstract = %s, keywords = %s, tags = %s WHERE item_id = %s
+            UPDATE item SET user_id = %s, title = %s, authors = %s, year = %s, journal = %s, volume = %s, issue = %s, pages = %s, doi = %s, url = %s, abstract = %s, keywords = %s, tags = %s WHERE item_id = %s
             ''',
-            (uid,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags,item_id)
+            (user_id, title, authors, year, journal, volume, issue,
+             pages, doi, url, abstract, keywords, tags, item_id)
         )
         conn.commit()
 
@@ -230,8 +233,9 @@ def update_item(item_id,uid,title,authors,year,journal,volume,issue,pages,doi,ur
         item_id = cur.fetchone()['item_id']
     if item_id is None:
         return None
-    
+
     return 'OK'
+
 
 def delete_item(item_id):
     '''
@@ -248,11 +252,12 @@ def delete_item(item_id):
 
         # check if item deleted
         item_id = cur.fetchone()['item_id']
-        uid=cur.fetchone()['uid']
-    if item_id is not None and uid is None:
+        user_id = cur.fetchone()['user_id']
+    if item_id is not None and user_id is None:
         return 'OK'
     else:
         return None
+
 
 def delete_pdf(item_id):
     '''
@@ -274,22 +279,23 @@ def delete_pdf(item_id):
         return 'OK'
     else:
         return None
-        
 
-def cite_item(uid,doi):
+
+def cite_item(user_id, doi):
     '''
     cite item
     '''
     with conn.cursor() as cur:
         cur.execute(
             '''
-            SLECT * FROM item WHERE doi = %s, uid = %s''',
-            (doi,uid)
+            SLECT * FROM item WHERE doi = %s, user_id = %s''',
+            (doi, user_id)
         )
         row = cur.fetchone()
         if row is None:
             return None
         return row
+
 
 def get_item(item_id):
     '''

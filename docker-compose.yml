@@ -4,7 +4,7 @@ services:
     image: postgres:14.2
     restart: always
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - ./db_data:/var/lib/postgresql/data
 
     ports:
       - "5432:5432"
@@ -16,7 +16,6 @@ services:
       - 'POSTGRES_DB=yondero'
       - 'PGDATA=/var/lib/postgresql/data/pgdata'
 
-
   app:
     build:
       context: .
@@ -25,7 +24,7 @@ services:
     volumes:
       - ./logs:/app/logs
     ports:
-      - "5000:5000"
+      - "8080:8080"
     depends_on:
       - db
     networks:
@@ -36,6 +35,3 @@ networks:
   internal_network:
     internal: true
   external_network:
-
-volumes:
-  db_data:

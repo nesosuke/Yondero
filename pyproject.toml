@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "yondero"
+version = "0.0.1"
+description = ""
+authors = ["nesosuke <neso@neso.tech>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+Flask = "^2.1.1"
+bibtexparser = "^1.2.0"
+Flask-Login = "^0.6.0"
+psycopg2 = "^2.9.3"
+Flask-Cors = "^3.0.10"
+gunicorn = "^20.1.0"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.6.0"
+flake8 = "^4.0.1"
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

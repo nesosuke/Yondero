@@ -20,7 +20,7 @@ def create_app(test_config=None):
 
     # register blueprints
     from backend import api
-    app.register_blueprint(api.url_api)
+    app.register_blueprint(api.bp)
 
     from frontend import web
     app.register_blueprint(web.bp)

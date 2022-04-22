@@ -30,6 +30,7 @@ paths:
     post:
       tags:
         - "Item"
+      description: "Return the citation for the item, BibTeX format"
       parameters:
         - in: header
           name: body
@@ -108,6 +109,7 @@ paths:
                 $ref: "#/components/schemas/500"
   /item/{item_id}:
     post:
+      deprecated: true # /item/cite　で代用できる気がする
       tags:
         - "Item"
       description: Fetch an item by its item_id
@@ -555,11 +557,9 @@ components:
       required:
         - doi
       properties:
-        doi:
+        item_id:
           type: string
-          example: "10.2307/1969529"
-        style:
-          example: "bibtex"
+          example: "1"
 
     search_results:
       type: object

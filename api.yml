@@ -153,6 +153,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/500"
+  /item/update:
+    post: 
+      tags:
+        - Item
+      description: "Update an item"
+      parameters:
+        - in: header
+          name: body
+          required: true
+          schema:
+            $ref: "#/components/schemas/update_item_header"
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            $ref: "#/components/schemas/authorization_header"
+      responses:
+        200: 
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400"
 
   /stats:
     get:
@@ -710,6 +739,51 @@ components:
     new_item_header:
       type: object
       properties:
+        doi:
+          type: string
+          example: "10.2307/1969529"
+        title:
+          type: string
+          example: "Non-Cooperative Games"
+        authors:
+          type: array
+          items:
+            type: string
+            example: "John Nash"
+        journal:
+          type: string
+          example: "Annals of Mathematics"
+        volume:
+          type: string
+          example: "54"
+        issue:
+          type: string
+          example: "2"
+        pages:
+          type: string
+          example: "286--295"
+        year:
+          type: string
+          example: "1951"
+        type_of_doc:
+          type: string
+          example: "article"
+        url:
+          type: string
+          example: "http://www.jstor.org/stable/1969529"
+        read:
+          type: boolean
+          example: "false"
+        note:
+          type: string
+          example: "This is a note"
+
+    update_item_header:
+      type: object
+      properties:
+        item_id:
+          type: string
+          example: "1"
         doi:
           type: string
           example: "10.2307/1969529"

@@ -1,4 +1,6 @@
 # from flask_login import login_required
+from email import message
+from re import U
 from flask import (Blueprint, Flask, redirect, render_template, request,
                    url_for)
 from flask_cors import CORS
@@ -14,13 +16,9 @@ api_url = 'http://localhost:8080/api/v1'
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
 
 # test data
-userdata = {
+user = {
     'username': 'test',
     'email': 'test@example.com',
-}
-user = {
-    'user_id': 1,
-    'session_id': 1,
 }
 session = {
     'session_id': 1,
@@ -100,7 +98,7 @@ def get_userdata(user_id):
 
 @bp.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html',user=user)
 
 
 @bp.route('/hello')  # for testing
@@ -116,7 +114,7 @@ def dashboard():
     # userdata = get_userdata(user_id)
     # stats = get_stats(user_id)
 
-    return render_template('dashboard.html', userdata=userdata, stats=stats)
+    return render_template('dashboard.html', user=user, stats=stats)
 
 
 # @login_required
@@ -125,18 +123,18 @@ def items():
     '''
     show list of items
     '''
-    return render_template('items.html')
+    return render_template('items.html',user=user)
 
 
 @bp.route('/login', methods=['GET'])
 def login():
-    return render_template('login.html')
+    return render_template('login.html',user=user)
 
 
 # @login_required
 @bp.route('/logout', methods=['GET'])
 def logout():
-    return render_template('logout.html')
+    return render_template('logout.html',user=user)
 
 
 @bp.route('/upload', methods=['GET', 'POST'])
@@ -146,7 +144,7 @@ def upload():
     '''
 
     if request.method == 'GET':
-        return render_template('upload.html')
+        return render_template('upload.html',user=user)
 
     # metadata handling
     body = request.form
@@ -176,23 +174,23 @@ def upload():
                 result_file = 'file added successfully'
             else:
                 result_file = 'file add failed'
-                return render_template('error.html', message=result_file)
+                return render_template('error.html', message=result_file, user=user)
 
         elif file.filename == '':  # no file selected
             result_file = 'empty filename is not allowed'
-            return render_template('error.html', message=result_file)
+            return render_template('error.html', message=result_file, user=user)
 
         else:  # file is not allowed
             result_file = 'file type is not allowed'
-            return render_template('error.html', message=result_file)
+            return render_template('error.html', message=result_file, user=user)
     else:  # no file
         pass        # do nothing
 
     # upload finish successfully
     if 'successfully' in result_file and 'successfully' in result_item:
-        return render_template('success.html', message='upload successfully')
+        return render_template('success.html', message='upload successfully', user=user)
     else:
-        return render_template('error.html', message='upload failed')
+        return render_template('error.html', message='upload failed', user=user)
 
 
 @bp.route('/download', methods=['GET'])
@@ -210,15 +208,15 @@ def download():
 
 
 @bp.route('/error', methods=['GET'])
-def error():
-    return render_template('error.html')
+def error(message):
+    return render_template('error.html',user=user,message=message)
 
 
 @bp.route('/search', methods=['GET', 'POST'])
 def search():
-    return render_template('search.html')
+    return render_template('search.html',user=user)
 
 
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
-    return render_template('register.html')
+    return render_template('register.html',user=user)

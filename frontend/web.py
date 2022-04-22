@@ -27,8 +27,10 @@ def get_user_id_from_session(session_id):
 
 
 def get_stats(user_id):
-    url = api_url+'/users/'+str(user_id)
+    user_id = str(user_id)
+    url = api_url+'/users/'+user_id
     token = 1  # TODO get token from Flask.LoginManager
+    token = str(token)
     headers = {
         'user_id': user_id,
         'token': token,
@@ -46,8 +48,10 @@ def get_stats(user_id):
 
 
 def get_userdata(user_id):
-    url = api_url+'/users/'+str(user_id)
+    user_id = str(user_id)
+    url = api_url+'/users/'+user_id
     token = 1  # TODO get token from Flask.LoginManager
+    token = str(token)
     headers = {
         'user_id': user_id,
         'token': token,
@@ -77,11 +81,19 @@ def hello():
 @bp.route('/dashboard', methods=['GET'])
 def dashboard():
     # TODO get session id from Flask.LoginManager
-    user_id = get_user_id_from_session(1)
-    userdata = get_userdata(user_id)
-    stats = get_stats(user_id)
-
-    return render_template('dashboard.html', stats=stats, user=userdata)
+    # user_id = get_user_id_from_session(1)
+    # userdata = get_userdata(user_id)
+    # stats = get_stats(user_id)
+    userdata = {
+        'username': 'test',
+        'email': 'test@example.com'
+    }
+    stats = {
+        'total_count': 100,
+        'starrted_count': 10,
+        'unread_count': 10,
+    }
+    return render_template('dashboard.html', userdata=userdata, stats=stats)
 
 
 # @login_required
@@ -94,13 +106,13 @@ def items():
 
 
 @bp.route('/login', methods=['GET'])
-def web_login():
+def login():
     return render_template('login.html')
 
 
 # @login_required
 @bp.route('/logout', methods=['GET'])
-def web_logout():
+def logout():
     return render_template('logout.html')
 
 

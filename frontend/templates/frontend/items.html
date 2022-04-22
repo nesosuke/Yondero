@@ -13,6 +13,7 @@
     <input type="submit" value="Search">
 </form>
 <table>
+メモ：ハリボテ
     <tr>
         <th>Title</th>
         <th>Authors</th>
@@ -20,7 +21,22 @@
         <th>Journal</th>
         <th>PDF</th>
     </tr>
-    {% for item in items %}
+    <tr>
+    <td>sample title1</td>
+    <td>sample authors1</td>
+    <td>sample year1</td>
+    <td>sample journal1</td>
+    <td>sample pdf link1</td>
+    </tr>
+    <tr>
+    <td>sample title2</td>
+    <td>sample authors2</td>
+    <td>sample year2</td>
+    <td>sample journal2</td>
+    <td>sample pdf link2</td>
+    </tr>
+    
+    {# {% for item in items %}
     <tr>
         <td><a href="{{ url_for('item.title') }}">{{ item.title }}</a></td>
         <td>
@@ -36,6 +52,6 @@
             <a href="{{ url_for('item.pdf') }}">{{ item.pdf }}</a>
         </td>
     </tr>
-    {% endfor %}
+    {% endfor %} #}
 </table>
 {% endblock %}

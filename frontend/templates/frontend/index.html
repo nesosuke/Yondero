@@ -1,23 +1,37 @@
 {% extends 'base.html' %}
 
 {% block header %}
-{% block title %}Toppage{% endblock %}
+    {% block title %}Toppage{% endblock %}
 {% endblock %}
 
 
 {% block content %}
 <p>Yondero is a management application for papers, articles, documents, and other contents.</p>
+    {# 
+    <div class="navi">
+        <ul>
+            <li><a href="{{ url_for('web.index') }}">Home</a></li>
+            <li><a href="{{ url_for('web.dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('web.items') }}">Items</a></li>
+            <li><a href="{{ url_for('web.record') }}">Record</a></li>
+            <li><a href="{{ url_for('web.search') }}">Search</a></li>
+            <li><a href="{{ url_for('web.login') }}">Login</a></li>
+            <li><a href="{{ url_for('web.register') }}">Register</a></li>
+            <li><a href="{{ url_for('web.logout') }}">Logout</a></li>
+        </ul> #}
+         
 
-<!-- for debug -->
 <div class="navi">
-    <ul>
-        <li><a href="{{ url_for('web.index') }}">Home</a></li>
-        <li><a href="{{ url_for('web.dashboard') }}">Dashboard</a></li>
-        <li><a href="{{ url_for('web.items') }}">Items</a></li>
-        <li><a href="{{ url_for('web.record') }}">Record</a></li>
-        <li><a href="{{ url_for('web.search') }}">Search</a></li>
-        <li><a href="{{ url_for('web.login') }}">Login</a></li>
-        <li><a href="{{ url_for('web.register') }}">Register</a></li>
-        <li><a href="{{ url_for('web.logout') }}">Logout</a></li>
-    </ul>
-        {% endblock %}
+メモ：ハリボテ
+<ul>
+<li>Home Link</li>
+<li>Dashboard Link</li>
+<li>Items Link</li>
+<li>Upload Link</li>
+<li>Search Link</li>
+<li>Login Link</li>
+<li>Register Link</li>
+<li>Logout Link</li>
+</ul>
+
+{% endblock %}

@@ -13,6 +13,37 @@ attachments_file_savedir = './attachments'
 api_url = 'http://localhost:8080/api/v1'
 ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
 
+# test data
+userdata = {
+    'username': 'test',
+    'email': 'test@example.com',
+}
+user = {
+    'user_id': 1,
+    'session_id': 1,
+}
+session = {
+    'session_id': 1,
+    'user_id': 1,
+}
+stats = {
+    'total': 100,
+    'starrted': 10,
+    'unread': 10,
+}
+itemdata = {
+    'title': 'test title',
+    'authors': ['author1', 'author2'],
+    'year': '2020',
+    'journal': 'test journal',
+    'volume': '42',
+    'issue': '1',
+    'pages': '1-2',
+    'doi': '10.9999/test.doi',
+    'abstract': 'lorem ipsum',
+    'note': 'lorem ipsum lorem ipsum note',
+}
+# end of test data
 
 def allowed_file(filename):
     return '.' in filename and \

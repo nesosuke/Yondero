@@ -110,6 +110,8 @@ paths:
 
   /search:
     post:
+      tags:
+        - "Search"
       description: Search for own items
       parameters:
         - in: header
@@ -272,7 +274,7 @@ paths:
   /login:
     post:
       tags:
-        - user
+        - Users
       parameters:
         - in: header
           name: body
@@ -298,7 +300,7 @@ paths:
   /logout:
     post:
       tags:
-        - user
+        - Users
       parameters:
         - in: header
           name: session_id

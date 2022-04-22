@@ -8,4 +8,16 @@
 {% block content %}
 <p>Yondero is a management application for papers, articles, documents, and other contents.</p>
 
-{% endblock %}
+<!-- for debug -->
+<div class="navi">
+    <ul>
+        <li><a href="{{ url_for('web.index') }}">Home</a></li>
+        <li><a href="{{ url_for('web.dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('web.items') }}">Items</a></li>
+        <li><a href="{{ url_for('web.record') }}">Record</a></li>
+        <li><a href="{{ url_for('web.search') }}">Search</a></li>
+        <li><a href="{{ url_for('web.login') }}">Login</a></li>
+        <li><a href="{{ url_for('web.register') }}">Register</a></li>
+        <li><a href="{{ url_for('web.logout') }}">Logout</a></li>
+    </ul>
+        {% endblock %}

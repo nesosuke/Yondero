@@ -1,9 +1,5 @@
-from os import abort
-
 from flask import Blueprint, Flask, jsonify, request, url_for
 from flask_cors import CORS
-from flask_login import (LoginManager, current_user, login_required,
-                         login_user, logout_user)
 
 from . import postgres, style
 
@@ -18,94 +14,120 @@ user = {
 api = Flask(__name__)
 CORS(api)
 
-url_api = Blueprint('api', __name__, url_prefix='/api/v1')
+bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
 
-@url_api.route('/', methods=['GET'])
-def root() -> object:
+@bp.route('/item/cite', methods=['POST'])
+def item_cite():
     '''
-    return available endpoints
+    Return citation for item, BibTeX format -> 200,404,500
     '''
-    endpoints = [
-        "/item/cite"    # POST
-        "/item/{uid}",  # POST
-        "/item/{uid}/download",  # POST
-        "/item/{uid}/upload",  # POST
-        "/item/{uid}/delete",  # POST
-        "/register",
-        "/login",
-        "/logout",
-    ]
+    item_id = request.form['item_id']
 
-    res = {"endpoints": endpoints}
-    return jsonify(res)
+    # TODO: to get item data from database
+
+    data = {}
+
+    # TODO: to style data into bibtex format
+    citation = ''
+
+    return citation
 
 
-@url_api.route('/item/<uid>/download', methods=['POST'])
-def download_pdf(item_id: str):
+@bp.route('/item/new', methods=['POST'])
+def item_new():
     '''
-    give PDF to client
+    Add new item to database -> 200,400,500
     '''
+    data = request.form  # not included item_id
 
-    pdffile = postgres.get_pdf(item_id)  # TODO
-    if pdffile is None:
-        abort(404)
+    # TODO: to add new item to database
+    # TODO: to return item_id, added_at
+    item_id = 0
+    added_at = '2020-01-01T00:00:00Z'
 
-    return pdffile
+    data['item_id'] = item_id
+    data['added_at'] = added_at
+
+    return jsonify(data)
 
 
-@url_api.route('/item/<uid>/upload', methods=['POST'])
-def upload_pdf(item_id: str):
+@bp.route('/item/update', methods=['POST'])
+def item_update():
     '''
-    upload PDF to server
+    Update item in database -> 200,400,500
     '''
+    data = request.form  # include item_id
 
-    pdf = request.files['pdf']
-    if pdf is None:
-        abort(400)
+    # TODO: to update item in database
 
-    if postgres.get_pdf(item_id) is not None:
-        abort(409)
+    message = 'Success'
 
-    postgres.save_pdf(item_id, pdf)
-
-    if postgres.get_pdf(item_id) is None:
-        abort(500)
-
-    return "OK"
+    return jsonify(message)
 
 
-
-
-
-
-
-
-
-@url_api.route('/item/<item_id>/delete', methods=['POST'])
-def delete_item(item_id: str):
+@bp.route('/item/upload', methods=['POST'])
+def item_upload():
     '''
-    delete item
+    Upload file and metadata to server -> 200,409,500
     '''
-    if postgres.get_item(item_id) is None:
-        abort(404)
+    if 'item_id' in request.headers:
+        item_id = request.headers['item_id']
+    else:
+        # TODO: to get NEW item_id from database
+        pass
+    title = request.headers['title']
 
-    if postgres.delete_item(item_id) is None:
-        abort(500)
+    file = request.files['file']
+    file_name = file.filename
+    file_ext = file_name.split('.')[-1]
 
-    return "OK"
+    # TODO: to upload file to server(like S3), OR to save file to local, OR to add file to database -> item_id
+
+    message = 'Success'
+
+    return jsonify(message)
 
 
-@url_api.route('/item/cite', methods=['POST'])
-def cite_item():
+@bp.route('/item/download', methods=['GET'])
+def item_download():
     '''
-    cite item
+    Return file from server -> 200,404,500
     '''
-    req_body = request.get_json()
-    doi = req_body['doi']
+    item_id = request.headers['item_id']
 
-    uid = login_user.get_id()
+    # TODO: to get file from S3, OR to get file from local, OR to get file from database
 
-    item = postgres.create_item(uid, doi)
-    if item is None:
-        abort(404)
+    file = bytes('')
+
+    return file
+
+
+@bp.route('/item/all')
+def item_all():
+    '''
+    Return all items in database -> 200,404,500
+    '''
+    # TODO: to get user_id from database
+    username = user['username']
+    user_id = 1
+
+    # TODO: to get all items from database
+    items = []
+
+    return jsonify(items)
+
+
+@bp.route('/stats', methods=['GET'])
+def stats():
+    '''
+    Return statistics of items in database -> 200,404,500
+    '''
+    # TODO: to get user_id from database
+    username = user['username']
+    user_id = 1
+
+    # TODO: to get statistics from database
+    stats = {}
+
+    return jsonify(stats)

@@ -209,3 +209,8 @@ def error():
 @bp.route('/search', methods=['GET', 'POST'])
 def search():
     return render_template('search.html')
+
+@bp.route('/register', methods=['GET', 'POST'])
+def register():
+    return render_template('register.html')
+    

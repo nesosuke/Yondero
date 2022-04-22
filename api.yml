@@ -304,59 +304,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
-  /login:
-    post:
-      tags:
-        - Users
-      parameters:
-        - in: header
-          name: body
-          required: true
-          schema:
-            $ref: "#/components/schemas/userdata"
-
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/session_id"
-
-        403:
-          description: "Forbidden"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/403"
-
-  /logout:
-    post:
-      tags:
-        - Users
-      parameters:
-        - in: header
-          name: session_id
-          required: true
-          schema:
-            type: string
-            $ref: "#/components/schemas/session_id"
-
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/200"
-
-        500:
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
-
   /item/all:
     post:
       tags:

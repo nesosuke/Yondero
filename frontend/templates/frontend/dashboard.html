@@ -1,27 +1,16 @@
 {%extends 'base.html'%} 
-{%block title%}dashboard{%endblock%}
+{%block title%}Dashboard{%endblock%}
  {%block content%}
-<h1>dashboard</h1>
+<h1>Dashboard</h1>
 メモ：ハリボテ
 <div class="summary">
   <span class="profile">
-    <img
-      src="https://s.gravatar.com/avatar/8040b62b42ec5d250ffede272a22832b?s=80"
-      alt="nesouke.avatar"
-      class="avatar"
-    />
-    <span class="name">nesouke</span>
-  </span>
-  <span class="stats">Stats:<br>
-    <span class="counts">Counts:<br>
-    Unread:
-      <span class="unread">42</span><br>
-      Starred:
-      <span class="starred">21</span><br>
-      Total:
-      <span class="total">63</span><br>
+    {{userdata.username}}
     </span>
-
+  <span class="stats">Stats:<br>
+      Unread:  {{stats.unread}}<<br>
+      Starred: {{stats.starred}}<br>
+      Total: {{stats.total}}<br>
     </span>
 </div>
 

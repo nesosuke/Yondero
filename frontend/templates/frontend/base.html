@@ -6,12 +6,16 @@
 </head>
 <nav>
     <h1><a href="{{ url_for('web.index') }}">Yondero</a></h1>
-    {#  {% if user.is_logined %}
+    <span class="nav-right">
+        {# {% if current_user.is_authenticated %} #}
+        User: {{ userdata.username }}<br>
+        {# {%endif%} #}
+     {# {% if user.is_logined %}
     <a href="{{ url_for('logout') }}">Logout</a>
     {% else %}
     <a href="{{ url_for('login') }}">Login/Register</a>
     {% endif %}  #}
-    
+    </span>
 </nav>
 
 {% block content %}{% endblock %}

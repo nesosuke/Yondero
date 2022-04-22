@@ -17,5 +17,3 @@ RUN apt-get remove -y gcc curl && \
     apt-get autoremove -y && \
     apt-get clean -y && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-CMD . ~/.profile && poetry run gunicorn api:api --config ./config/gunicorn.conf.py

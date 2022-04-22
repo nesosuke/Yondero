@@ -30,6 +30,7 @@ services:
     networks:
       - internal_network
       - external_network
+    command: sh -c ". ~/.profile && poetry run gunicorn run:app --config /app/config/gunicorn.conf.py"
 
 networks:
   internal_network:

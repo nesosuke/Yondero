@@ -7,7 +7,6 @@ from . import postgres, style
 user = {
     'username': 'admin',
     'password': 'admin',
-    'email': 'admin@neso.tech'
 }
 # 認証難しすぎワロタ（ここまで）
 

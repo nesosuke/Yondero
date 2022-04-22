@@ -6,9 +6,9 @@
 
 {% block content %}
 <h1>Items</h1>
-<p><a href="{{ url_for('record_new') }}"> Record new item</a>
+<p><a href="{{ url_for('web.record') }}"> Record new item</a>
 </p>
-<form action="{{ url_for('search') }}" method="GET">
+<form action="{{ url_for('web.search') }}" method="GET">
     <input type="text" name="q" placeholder="Search">
     <input type="submit" value="Search">
 </form>

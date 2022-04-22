@@ -5,7 +5,7 @@
     <title>{% block title %}{% endblock %} - Yondero</title>
 </head>
 <nav>
-    <h1>Yondero</h1>
+    <h1><a href={{ url_for('web.index') }}>Yondero</a></h1>
     {# {% if user.is_logined %}
     <a href="{{ url_for('logout') }}">Logout</a>
     {% else %}

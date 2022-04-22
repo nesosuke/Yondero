@@ -63,6 +63,49 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
+  /item/new:
+    post:
+      tags:
+        - "Item"
+      parameters:
+        - in: header
+          name: body
+          required: true
+          schema:
+            $ref: "#/components/schemas/new_item_header"
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            $ref: "#/components/schemas/authorization_header"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/item"
+
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400"
+
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401"
+
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
   /item/{item_id}:
     post:
       tags:
@@ -574,6 +617,13 @@ components:
           type: string
           example: "2020-04-19T12:00:00.000Z"
 
+    400:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Bad Request"
+
     401:
       type: object
       properties:
@@ -656,3 +706,45 @@ components:
     authorization_header:
       type: string
       example: "Bearer access_token"
+
+    new_item_header:
+      type: object
+      properties:
+        doi:
+          type: string
+          example: "10.2307/1969529"
+        title:
+          type: string
+          example: "Non-Cooperative Games"
+        authors:
+          type: array
+          items:
+            type: string
+            example: "John Nash"
+        journal:
+          type: string
+          example: "Annals of Mathematics"
+        volume:
+          type: string
+          example: "54"
+        issue:
+          type: string
+          example: "2"
+        pages:
+          type: string
+          example: "286--295"
+        year:
+          type: string
+          example: "1951"
+        type_of_doc:
+          type: string
+          example: "article"
+        url:
+          type: string
+          example: "http://www.jstor.org/stable/1969529"
+        read:
+          type: boolean
+          example: "false"
+        note:
+          type: string
+          example: "This is a note"

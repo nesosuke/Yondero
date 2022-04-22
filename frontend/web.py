@@ -1,5 +1,6 @@
 # from flask_login import login_required
-from flask import Flask, redirect, render_template, request, url_for, Blueprint
+from flask import (Blueprint, Flask, redirect, render_template, request,
+                   requests, url_for)
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
@@ -37,13 +38,10 @@ def dashboard():
 # @login_required
 @bp.route('/items', methods=['GET'])
 def items():
+    '''
+    show list of items
+    '''
     return render_template('items.html')
-
-
-# @login_required
-@bp.route('/record', methods=['GET', 'POST'])
-def record():
-    return render_template('record.html')
 
 
 @bp.route('/login', methods=['GET'])
@@ -145,6 +143,7 @@ def download():
 @bp.route('/error', methods=['GET'])
 def error():
     return render_template('error.html')
+
 
 @bp.route('/search', methods=['GET', 'POST'])
 def search():

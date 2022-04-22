@@ -214,7 +214,8 @@ paths:
     post:
       tags:
         - "Search"
-      description: Search for own items
+      deprecated: true
+      description: "Search for own items. The reason for deprecated is the specification is not clear. This endpoint is not used in the current version of the API."
       parameters:
         - in: header
           name: search_query

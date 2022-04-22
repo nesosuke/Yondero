@@ -26,22 +26,61 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
+  /register:
+    post:
+      tags:
+        - User
+      description: "Register a new user"
+      requestBody:
+        description: "User data"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/admin_user"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/admin_user"
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
   /item/cite:
     post:
       tags:
         - "Item"
       description: "Return the citation for the item, BibTeX format"
+      requestBody:
+        description: "Item data"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/fetch_header"
       parameters:
-        - in: header
-          name: body
-          required: true
-          schema:
-            $ref: "#/components/schemas/fetch_header"
         # - in: header
         #   name: Authorization
         #   required: true
         #   schema:
         #     $ref: "#/components/schemas/authorization_header"
+        - in: header
+          name: admin_user_id
+          required: true
+          schema:
+            $ref: "#/components/schemas/admin_user_id"
       responses:
         200:
           description: "Success"
@@ -68,12 +107,17 @@ paths:
     post:
       tags:
         - "Item"
+      requestBody:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/new_item_header"
       parameters:
         - in: header
-          name: body
+          name: admin_user_id
           required: true
           schema:
-            $ref: "#/components/schemas/new_item_header"
+            $ref: "#/components/schemas/admin_user_id
         # - in: header
         #   name: Authorization
         #   required: true
@@ -160,17 +204,22 @@ paths:
       tags:
         - Item
       description: "Update an item"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/update_item_header"
       parameters:
-        - in: header
-          name: body
-          required: true
-          schema:
-            $ref: "#/components/schemas/update_item_header"
         # - in: header
         #   name: Authorization
         #   required: true
         #   schema:
         #     $ref: "#/components/schemas/authorization_header"
+        - in: header
+          name: admin_user_id
+          required: true
+          schema:
+            $ref: "#/components/schemas/admin_user_id"
       responses:
         200: 
           description: "Success"
@@ -189,13 +238,19 @@ paths:
     get:
       tags:
         - "Stats"
-      description: "Get stats"
-      # parameters:
+      deprecated: true
+      description: "Get stats. The reason for deprecated is not yet clear for specification."
+      parameters:
       #   - in: header
       #     name: Authorization
       #     required: true
       #     schema:
       #       $ref: "#/components/schemas/authorization_header"
+        - in: header
+          name: admin_user_id
+          required: true
+          schema:
+            $ref: "#/components/schemas/admin_user_id"
 
       responses:
         200:
@@ -278,12 +333,17 @@ paths:
       tags:
         - "Item"
       description: upload PDF
-      # parameters:
+      parameters:
       #   - in: header
       #     name: Authorization
       #     required: true
       #     schema:
       #       $ref: "#/components/schemas/authorization_header"
+        - in: header
+          name: admin_user_id
+          required: true
+          schema:
+            $ref: "#/components/schemas/admin_user_id"
       requestBody:
         content:
           multipart/form-data:
@@ -325,23 +385,26 @@ paths:
                 $ref: "#/components/schemas/500"
 
   /item/download:
-    post:
+    get:
       tags:
         - "Item"
       description: download PDF of an article
       parameters:
-        - in: path
-          name: item_id
-          required: true
-          schema:
-            type: string
-            $ref: "#/components/schemas/item_id"
         # - in: header
         #   name: Authorization
         #   required: true
         #   schema:
         #     $ref: "#/components/schemas/authorization_header"
-
+        - in: header
+          name: admin_user_id
+          required: true
+          schema:
+            $ref: "#/components/schemas/admin_user_id"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/item_id"
       responses:
         200:
           description: Download PDF
@@ -380,16 +443,21 @@ paths:
                 $ref: "#/components/schemas/500"
 
   /item/all:
-    post:
+    get:
       tags:
         - "Item"
       description: Fetch all items
-      # parameters:
+      parameters:
       #   - in: header
       #     name: Authorization
       #     required: true
       #     schema:
       #       $ref: "#/components/schemas/authorization_header"
+        - in: header
+          name: admin_user_id
+          required: true
+          schema:
+            $ref: "#/components/schemas/admin_user_id"
       responses:
         200:
           description: "Success"
@@ -412,40 +480,100 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
-  /register:
-    post:
-      tags:
-        - Users
-      deprecated: true
-      description: Register a new user. 認証難しすぎワロタ．
+  /debug:
+    get:  
+      description: "Debug endpoint"
       parameters:
         - in: header
-          name: body
+          name: admin_username
           required: true
           schema:
-            $ref: "#/components/schemas/userdata"
-
+            $ref: "#/components/schemas/admin_username"
+        - in: header
+          name: admin_password
+          required: true
+          schema:
+            $ref: "#/components/schemas/admin_password"
+        - in: header
+          name: admin_user_id
+          required: true
+          schema:
+            $ref: "#/components/schemas/admin_user_id"
+        # - in: header
+        #   name: Authorization
+        #   required: true
+        #   schema:
+        #     $ref: "#/components/schemas/authorization_header"
+        # - in: header
+        #   name: body
+        #   required: true
+        #   schema:
+        #     $ref: "#/components/schemas/admin_user"
       responses:
         200:
           description: "Success"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/200"
+                $ref: "#/components/schemas/item"
 
-        409:
-          description: "Conflict"
+        400:
+          description: "Bad request"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/409"
+                $ref: "#/components/schemas/400"
+
+        # 401:
+        #   description: "Unauthorized"
+        #   content:
+        #     application/json:
+        #       schema:
+        #         $ref: "#/components/schemas/401"
 
         500:
-          description: "Error"
+          description: "Internal server error"
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/500"
+    post:  
+      description: "Debug endpoint"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/new_item_header"
+      parameters:
+        - in: header
+          name: admin_user_id
+          required: true
+          schema: 
+            $ref: "#/components/schemas/admin_user_id"
+        - in: header
+          name: admin_password
+          required: true
+          schema: 
+            $ref: "#/components/schemas/admin_password"
+        - in: header
+          name: admin_username
+          required: true
+          schema: 
+            $ref: "#/components/schemas/admin_username"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/item"
+
+        400:
+          description: "Bad request"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/400"
 
   /auth/token:
     post:
@@ -630,7 +758,7 @@ components:
         year:
           type: string
           example: "1951"
-        type_of_doc:
+        type:
           type: string
           example: "article"
         url:
@@ -768,7 +896,7 @@ components:
         year:
           type: string
           example: "1951"
-        type_of_doc:
+        type:
           type: string
           example: "article"
         url:
@@ -813,7 +941,7 @@ components:
         year:
           type: string
           example: "1951"
-        type_of_doc:
+        type:
           type: string
           example: "article"
         url:
@@ -825,3 +953,21 @@ components:
         note:
           type: string
           example: "This is a note"
+    admin_username:
+      type: string
+      example: "admin"
+    admin_password:
+      type: string
+      example: "admin"
+    admin_user_id:
+      type: string
+      example: "0"
+    admin_user: 
+      type: object
+      properties:
+        username:
+          type: string
+          example: "admin"
+        password:
+          type: string
+          example: "admin"

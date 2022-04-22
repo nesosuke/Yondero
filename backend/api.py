@@ -1,13 +1,14 @@
-from flask import Blueprint, Flask, jsonify, request, url_for
+from flask import Blueprint, Flask, abort, jsonify, request, url_for
 from flask_cors import CORS
 
 from . import postgres, style
-
+# HTTP status code は適当（デバッグ用）
 # 認証難しすぎワロタ
-user = {
-    'username': 'admin',
-    'password': 'admin',
-}
+# user = {
+#     'username': 'admin',
+#     'password': 'admin',
+# }
+# user_id=1
 # 認証難しすぎワロタ（ここまで）
 
 api = Flask(__name__)
@@ -15,20 +16,44 @@ CORS(api)
 
 bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
+@bp.route('/register', methods=['POST'])
+def resister():
+    '''
+    register an user
+    '''
+    if not request.get_json():
+        abort(410)
+    data = request.get_json()
+    
+    # TODO: generalize
+
+    user_id=postgres.create_user(data['username'], data['password'])
+    if user_id is None:
+        abort(418)
+    return jsonify({'user_id': user_id})
 
 @bp.route('/item/cite', methods=['POST'])
 def item_cite():
     '''
     Return citation for item, BibTeX format -> 200,404,500
     '''
-    item_id = request.form['item_id']
+    user_id=request.headers.get('user_id',default=None)
+    if user_id is None:
+        abort(418)
 
-    # TODO: to get item data from database
+    if not request.get_json():
+        abort(410)
+    data = request.get_json()
+    item_id = data['item_id']
 
-    data = {}
+    res = postgres.get_metadata(item_id)
+    if res is None:
+        abort(404)
+    metadata = res
 
     # TODO: to style data into bibtex format
     citation = ''
+    citation = metadata
 
     return citation
 
@@ -38,17 +63,28 @@ def item_new():
     '''
     Add new item to database -> 200,400,500
     '''
-    data = request.form  # not included item_id
+    user_id=request.headers.get('user_id',default=None)
+    if user_id is None:
+        abort(418)
+        
+    if request.get_json() is None:
+        abort(401)
+    data = request.get_json()  # not included item_id
+    data = dict(data)
+    data['user_id'] = user_id
 
-    # TODO: to add new item to database
-    # TODO: to return item_id, added_at
-    item_id = 0
-    added_at = '2020-01-01T00:00:00Z'
+    res = postgres.add_metadata(data)
+    if res is None:
+        abort(412)
+    item_id = res
+    created_at = postgres.get_metadata(item_id)['created_at']
 
-    data['item_id'] = item_id
-    data['added_at'] = added_at
+    return_data = {
+        'item_id': item_id,
+        'created_at': created_at
+    }
 
-    return jsonify(data)
+    return jsonify(return_data)
 
 
 @bp.route('/item/update', methods=['POST'])
@@ -56,13 +92,25 @@ def item_update():
     '''
     Update item in database -> 200,400,500
     '''
-    data = request.form  # include item_id
+    user_id=request.headers.get('user_id',default=None)
+    if user_id is None:
+        abort(418)
+    if not request.get_json():
+        abort(410)
+    data = request.get_json()  # include item_id
+    data = dict(data)
+    data['user_id'] = user_id
 
-    # TODO: to update item in database
+    res = postgres.update_metadata(data)
+    if res is None:
+        abort(403)
+    item_id = res
 
-    message = 'Success'
+    return_data = {
+        'item_id': item_id
+    }
 
-    return jsonify(message)
+    return jsonify(return_data)
 
 
 @bp.route('/item/upload', methods=['POST'])
@@ -70,22 +118,37 @@ def item_upload():
     '''
     Upload file and metadata to server -> 200,409,500
     '''
-    if 'item_id' in request.headers:
-        item_id = request.headers['item_id']
+    if 'file' not in request.files: #FIXME: file is not included in request.files
+        abort(401)
+    user_id=request.headers.get('user_id',default=None)
+    if user_id is None:
+        abort(418)
+
+    filedata = request.files['file']
+    filename = filedata.filename
+    if 'item_id' in request.get_json():
+        item_id = request.get_json()['item_id']
+        metadata = postgres.get_metadata(item_id)
+        if metadata is None:
+            abort(403)
+        res = postgres.update_attatchment(filedata, filename, item_id)
+        if res is None:
+            abort(404)
+        object_id = res
+        return_data = {
+            'object_id': object_id
+        }
+        return jsonify(return_data)
     else:
         # TODO: to get NEW item_id from database
-        pass
-    title = request.headers['title']
-
-    file = request.files['file']
-    file_name = file.filename
-    file_ext = file_name.split('.')[-1]
-
-    # TODO: to upload file to server(like S3), OR to save file to local, OR to add file to database -> item_id
-
-    message = 'Success'
-
-    return jsonify(message)
+        res = postgres.save_new_attatchment(filedata, filename, user_id)
+        if res is None:
+            abort(500)
+        object_id = res
+        return_data = {
+            'object_id': object_id
+        }
+        return jsonify(return_data)
 
 
 @bp.route('/item/download', methods=['GET'])
@@ -93,12 +156,19 @@ def item_download():
     '''
     Return file from server -> 200,404,500
     '''
-    item_id = request.headers['item_id']
+    user_id=request.headers.get('user_id',default=None)
+    if user_id is None:
+        abort(410)
 
-    # TODO: to get file from S3, OR to get file from local, OR to get file from database
+    if not request.get_json():
+        abort(418)
+    data = request.get_json()    
+    item_id = data['item_id']
 
-    file = bytes('')
-
+    res = postgres.get_attatchment(item_id)
+    if res is None:
+        abort(404)
+    file = res
     return file
 
 
@@ -107,14 +177,24 @@ def item_all():
     '''
     Return all items in database -> 200,404,500
     '''
+    user_id=request.headers.get('user_id',default=None)
+    if user_id is None:
+        abort(410)
+
+    res = postgres.get_all_metadata(user_id)
+    if res is None:
+        abort(404)
+    return jsonify(res)
+
     # TODO: to get user_id from database
-    username = user['username']
-    user_id = 1
-
-    # TODO: to get all items from database
-    items = []
-
-    return jsonify(items)
+    if request.get_json('user_id') is None:
+        abort(400)
+    user_id = request.get_json()['user_id']
+    res = postgres.get_all_metadata(user_id)
+    if res is None:
+        abort(404)
+    metadata = res
+    return jsonify(metadata)
 
 
 @bp.route('/stats', methods=['GET'])
@@ -122,11 +202,26 @@ def stats():
     '''
     Return statistics of items in database -> 200,404,500
     '''
-    # TODO: to get user_id from database
-    username = user['username']
-    user_id = 1
+    if request.get_json('user_id') is None:
+        abort(410)
+    user_id = request.get_json()
 
-    # TODO: to get statistics from database
+    res = postgres.get_all_metadata(user_id)
+    if res is None:
+        abort(404)
+    metadata = res
+
+    # TODO: to calculate statistics of items
     stats = {}
 
     return jsonify(stats)
+
+
+@bp.route('/debug', methods=['GET', 'POST'])
+def debug():
+    '''
+    Return request
+    '''
+    return jsonify(request.headers.get('user_id'))
+    #FIXME request.header.get('user_id')にする．
+    #FIXME body(=data)は request.get_json()['key']で取得できる．

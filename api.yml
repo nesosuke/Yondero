@@ -375,6 +375,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/500"
+
+  /register:
+    post:
+      tags:
+        - Users
+      description: Register a new user
+      parameters:
+        - in: header
+          name: body
+          required: true
+          schema:
+            $ref: "#/components/schemas/userdata"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/200"
+
+        409:
+          description: "Conflict"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/409"
+
+        500:
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
+
 components:
   schemas:
     item_id:
@@ -567,8 +602,13 @@ components:
           example: "john"
         password:
           type: string
-          example: "password(plain)"
-
+          example: "password(hashed)"
+        email:
+          type: string
+          example: "example@example.com"
+        confirm:
+          type: boolean
+          example: true
     user_id:
       type: string
       example: "1"

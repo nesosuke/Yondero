@@ -249,7 +249,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
-  /item/{item_id}/download:
+  /item/download:
     post:
       tags:
         - "Item"

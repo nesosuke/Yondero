@@ -14,13 +14,13 @@ conn = psycopg2.connect(**db_config)
 
 
 def init_db():
-    # create db: item,pdf,user
+    # create db: metadata,attatchment,user
     with conn.cursor() as cur:
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS items (
+        CREATE TABLE IF NOT EXISTS metadata (
             item_id SERIAL PRIMARY KEY,
             user_id TEXT NOT NULL,
-            title TEXT,
+            title TEXT NOT NULL,
             authors TEXT,
             year INTEGER,
             journal TEXT,
@@ -37,14 +37,14 @@ def init_db():
         )
         ''')
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS pdfs (
+        CREATE TABLE IF NOT EXISTS attatchment (
             object_id SERIAL PRIMARY KEY,
             item_id SERIAL NOT NULL,
-            pdf BYTEA
+            filepath TEXT, 
         )
         ''')
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS user (
             user_id SERIAL PRIMARY KEY,
             username TEXT UNIQUE NOT NULL,
             email TEXT UNIQUE NOT NULL,

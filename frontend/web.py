@@ -115,15 +115,7 @@ def dashboard():
     # user_id = get_user_id_from_session(1)
     # userdata = get_userdata(user_id)
     # stats = get_stats(user_id)
-    userdata = {
-        'username': 'test',
-        'email': 'test@example.com'
-    }
-    stats = {
-        'total_count': 100,
-        'starrted_count': 10,
-        'unread_count': 10,
-    }
+
     return render_template('dashboard.html', userdata=userdata, stats=stats)
 
 
@@ -157,23 +149,8 @@ def upload():
         return render_template('upload.html')
 
     # metadata handling
-    body = request.body.decode('utf-8')
+    body = request.form
 
-    user_id = 1  # TODO: get user_id from session
-
-    itemdata = {
-        'user_id': user_id,
-        'title': body['title'],
-        'authors': body['authors'],
-        'year': body['year'],
-        'journal': body['journal'],
-        'volume': body['volume'],
-        'issue': body['issue'],
-        'pages': body['pages'],
-        'doi': body['doi'],
-        'abstract': body['abstract'],
-        'note': body['note'],
-    }
 
     session_key = 1  # TODO: get session_key from session
 
@@ -241,7 +218,7 @@ def error():
 def search():
     return render_template('search.html')
 
+
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     return render_template('register.html')
-    

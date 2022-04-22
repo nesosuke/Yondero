@@ -7,6 +7,14 @@ from flask_login import (LoginManager, current_user, login_required,
 
 from . import postgres, style
 
+# 認証難しすぎワロタ
+user = {
+    'username': 'admin',
+    'password': 'admin',
+    'email': 'admin@neso.tech'
+}
+# 認証難しすぎワロタ（ここまで）
+
 api = Flask(__name__)
 CORS(api)
 
@@ -33,7 +41,6 @@ def root() -> object:
     return jsonify(res)
 
 
-@login_required
 @url_api.route('/item/<uid>/download', methods=['POST'])
 def download_pdf(item_id: str):
     '''
@@ -47,7 +54,6 @@ def download_pdf(item_id: str):
     return pdffile
 
 
-@login_required
 @url_api.route('/item/<uid>/upload', methods=['POST'])
 def upload_pdf(item_id: str):
     '''
@@ -69,56 +75,13 @@ def upload_pdf(item_id: str):
     return "OK"
 
 
-@url_api.route('/login', methods=['POST'])
-def login():
-    '''
-    login
-    '''
-    req_body = request.get_json()
-    username = req_body['username']
-    password = req_body['password']
-
-    user = postgres.get_user(username)
-    if user is None:
-        abort(404)
-
-    if user.check_password(password):
-        login_user(user)
-        return "OK"
-    else:
-        abort(401)
 
 
-@url_api.route('/logout', methods=['POST'])
-def logout():
-    '''
-    logout
-    '''
-    logout_user()
-    return "OK"
 
 
-@url_api.route('/register', methods=['POST'])
-def register():
-    '''
-    register
-    '''
-    req_body = request.get_json()
-    username = req_body['username']
-    password = req_body['password']
-
-    user = postgres.get_user(username)
-    if user is not None:
-        abort(409)
-
-    user = postgres.create_user(username, password)
-    if user is None:
-        abort(500)
-
-    return "OK"
 
 
-@login_required
+
 @url_api.route('/item/<item_id>/delete', methods=['POST'])
 def delete_item(item_id: str):
     '''
@@ -133,7 +96,6 @@ def delete_item(item_id: str):
     return "OK"
 
 
-@login_required
 @url_api.route('/item/cite', methods=['POST'])
 def cite_item():
     '''

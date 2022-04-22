@@ -111,69 +111,9 @@ def get_user(username):
         return row
 
 
-def create_user(username, password, email):
-    '''
-    create user
-    '''
-    password = generate_password_hash(password)
-    with conn.cursor() as cur:
-        cur.execute(
-            '''
-            INSERT INTO user (username,password,email)
-            VALUES (%s, %s, %s)
-            ''',
-            (username, password, email)
-        )
-        conn.commit()
-
-        # check if user created
-        user_id = cur.fetchone()['user_id']
-    if user_id is None:
-        return None
-
-    return 'OK'
 
 
-def check_password(username, password):
-    '''
-    check password
-    '''
-    with conn.cursor() as cur:
-        cur.execute(
-            '''
-            SELECT password FROM user WHERE username = %s
-            ''',
-            (username,)
-        )
-        row = cur.fetchone()
-        if row is None:
-            return None
-        if row['password'] == check_password_hash(password):
-            return True
-        else:
-            return False
 
-
-def change_password(username, password):
-    '''
-    change password
-    '''
-    password = generate_password_hash(password)
-    with conn.cursor() as cur:
-        cur.execute(
-            '''
-            UPDATE user SET password = %s WHERE username = %s
-            ''',
-            (password, username)
-        )
-        conn.commit()
-
-        # check if user created
-        user_id = cur.fetchone()['user_id']
-    if user_id is None:
-        return None
-
-    return 'OK'
 
 
 def get_item(item_id):

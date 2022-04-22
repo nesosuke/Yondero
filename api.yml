@@ -36,7 +36,11 @@ paths:
           required: true
           schema:
             $ref: "#/components/schemas/fetch_header"
-
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            $ref: "#/components/schemas/authorization_header"
       responses:
         200:
           description: "Success"
@@ -73,11 +77,10 @@ paths:
             type: string
             $ref: "#/components/schemas/item_id"
         - in: header
-          name: session_id
+          name: Authorization
           required: true
           schema:
-            type: string
-            $ref: "#/components/schemas/session_id"
+            $ref: "#/components/schemas/authorization_header"
 
       responses:
         200:
@@ -113,6 +116,13 @@ paths:
       tags:
         - "Stats"
       description: "Get stats"
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            $ref: "#/components/schemas/authorization_header"
+
       responses:
         200:
           description: "Success"
@@ -154,10 +164,10 @@ paths:
                 type: string
                 description: "The order to sort the results by"
         - in: header
-          name: session_id
+          name: Authorization
           required: true
           schema:
-            $ref: "#/components/schemas/session_id"
+            $ref: "#/components/schemas/authorization_header"
 
       responses:
         200:
@@ -193,6 +203,12 @@ paths:
       tags:
         - "Item"
       description: upload PDF
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            $ref: "#/components/schemas/authorization_header"
       requestBody:
         content:
           multipart/form-data:
@@ -246,11 +262,10 @@ paths:
             type: string
             $ref: "#/components/schemas/item_id"
         - in: header
-          name: session_id
+          name: Authorization
           required: true
           schema:
-            type: string
-            $ref: "#/components/schemas/session_id"
+            $ref: "#/components/schemas/authorization_header"
 
       responses:
         200:
@@ -349,11 +364,10 @@ paths:
       description: Fetch all items
       parameters:
         - in: header
-          name: userid
+          name: Authorization
           required: true
           schema:
-            $ref: "#/components/schemas/user_id"
-
+            $ref: "#/components/schemas/authorization_header"
       responses:
         200:
           description: "Success"

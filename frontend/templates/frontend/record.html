@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block header %}
+{% block title %}Record new item{% endblock %}
+{% endblock %}
+
+{% block content %}
+<h1>Record new item</h1>
+
+<p>
+<form action="{{ url_for('upload_item') }}" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".pdf .doc .docx">Allowed filetype: pdf, doc, docx<br>
+
+    <br>
+    <!-- list style of forms  -->
+    <ul>
+        <li>
+            <input type="text" name="title" placeholder="Title" required>
+        </li>
+        <li>
+            <input type="text" name="authors" placeholder="Authors">
+        </li>
+        <li>
+            <input type="text" name="year" placeholder="Year">
+        </li>
+        <li>
+            <input type="text" name="journal" placeholder="Journal">
+        </li>
+        <li>
+            <input type="text" name="volume" placeholder="Volume">
+        </li>
+        <li>
+            <input type="text" name="issue" placeholder="Issue">
+        </li>
+        <li>
+            <input type="text" name="pages" placeholder="Pages">
+        </li>
+        <li>
+            <input type="text" name="doi" placeholder="DOI">
+        </li>
+        <li>
+            <textarea name="abstract" placeholder="Abstract"></textarea>
+        </li>
+        <li>
+            <textarea name="note" placeholder="Note"></textarea>
+        </li>
+
+    </ul>
+
+
+    <input type="submit" value="Upload">
+    </p>
+</form>
+{% endblock %}

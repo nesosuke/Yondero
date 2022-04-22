@@ -10,3 +10,6 @@ accesslog = 'logs/access.log'
 errorlog = 'logs/error.log'
 loglevel = 'debug'
 logconfig = None
+
+# reload on code changes
+reload = True

@@ -32,6 +32,7 @@ def init_db():
             abstract TEXT,
             keywords TEXT,
             tags TEXT,
+            note TEXT,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
         ''')

@@ -691,3 +691,7 @@ components:
     access_token:
       type: string
       example: "access_token"
+
+    authorization_header:
+      type: string
+      example: "Bearer access_token"

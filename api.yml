@@ -410,6 +410,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
+  /auth/token:
+    post:
+      tags:
+        - Auth
+      description: Get a token
+      parameters:
+        - in: header
+          name: body
+          required: true
+          schema:
+            $ref: "#/components/schemas/userdata"
+
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/access_token"
+
+        401:
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/401"
+
+        500:
+          description: "Error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
 components:
   schemas:
     item_id:

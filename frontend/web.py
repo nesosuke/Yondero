@@ -134,7 +134,7 @@ def login():
 # @login_required
 @bp.route('/logout', methods=['GET'])
 def logout():
-    return render_template('logout.html',user=user)
+    return redirect(url_for('web.index'))
 
 
 @bp.route('/upload', methods=['GET', 'POST'])

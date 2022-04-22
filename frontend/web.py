@@ -128,10 +128,18 @@ def upload():
         return render_template('error.html', message='upload failed')
 
 
+@bp.route('/download', methods=['GET'])
+def download():
+    '''
+    download file from server
+    '''
 
-@bp.route('/upload_succeed', methods=['GET'])
-def upload_succeed():
-    return render_template('upload_succeed.html')
+    # TODO: get item_id from request
+    item_id = 1
+    # TODO: get session_key from request
+    session_key = 1
+    # TODO: get file from server
+    pass
 
 
 @bp.route('/error', methods=['GET'])

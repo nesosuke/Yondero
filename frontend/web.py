@@ -1,11 +1,21 @@
 # from flask_login import login_required
 from flask import Flask, redirect, render_template, request, url_for, Blueprint
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
+
 bp = Blueprint('web', __name__,
                url_prefix='/web',
                static_folder='static/frontend',
                template_folder='templates/frontend',
                )
+attachments_file_savedir = './attachments'
+api_url = 'http://localhost:8080/api/v1'
+ALLOWED_EXTENSIONS = {'pdf', 'doc', 'docx'}
+
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @bp.route('/')
@@ -49,38 +59,74 @@ def web_logout():
 
 @bp.route('/upload', methods=['GET', 'POST'])
 def upload():
+    '''
+    upload file and metadata to server
+    '''
+
     if request.method == 'GET':
-        return redirect(url_for('web.record'))
+        return render_template('upload.html')
 
-    if request.files and 'file' in request.files:
-        file = request.files['file']
-        if file.filename == '':
-            return 'No selected file'
+    # metadata handling
+    body = request.body.decode('utf-8')
 
-    return 'File uploaded. File name: %s' % file.filename
+    user_id = 1  # TODO: get user_id from session
 
-    body = request.form['body']
-    return body
-    # iteminfo = {
-    #     'title': body['title'],
-    #     'authors': body['authors'],
-    #     'year': body['year'],
-    #     'journal': body['journal'],
-    #     'volume': body['volume'],
-    #     'issue': body['issue'],
-    #     'pages': body['pages'],
-    #     'doi': body['doi'],
-    #     'abstract': body['abstract'],
-    #     'note': body['note'],
-    # }
-    # itemfile = body['file']  # bytes
+    itemdata = {
+        'user_id': user_id, '
+        'title': body['title'],
+        'authors': body['authors'],
+        'year': body['year'],
+        'journal': body['journal'],
+        'volume': body['volume'],
+        'issue': body['issue'],
+        'pages': body['pages'],
+        'doi': body['doi'],
+        'abstract': body['abstract'],
+        'note': body['note'],
+    }
 
-    # TODO: API upload process
+    session_key = 1  # TODO: get session_key from session
 
-    if True:
-        return redirect(url_for('web.upload_succeed'))
+    # post metadata to server
+    res = requests.post(api_url+'/items', json=itemdata,
+                        headers={'session_key': session_key})
+    if res.status_code == 200:
+        result_item = 'item added successfully'
     else:
-        return redirect(url_for('web.web_error'))
+        result_item = 'item add failed'
+        # metadata is somehow wrong
+        return render_template('error.html', message=result_item)
+
+    # file handling
+    if request.files:  # if there is a file
+        file = request.files['file']
+        if file and allowed_file(file.filename):  # file is allowed
+            filename = secure_filename(file.filename)
+            # post file to server
+            res = requests.post(
+                api_url+'/attachments', files={'file': file}, headers={'session_key': session_key})
+            if res.status_code == 200:
+                result_file = 'file added successfully'
+            else:
+                result_file = 'file add failed'
+                return render_template('error.html', message=result_file)
+
+        elif file.filename == '':  # no file selected
+            result_file = 'empty filename is not allowed'
+            return render_template('error.html', message=result_file)
+
+        else:  # file is not allowed
+            result_file = 'file type is not allowed'
+            return render_template('error.html', message=result_file)
+    else:  # no file
+        pass        # do nothing
+
+    # upload finish successfully
+    if 'successfully' in result_file and 'successfully' in result_item:
+        return render_template('success.html', message='upload successfully')
+    else:
+        return render_template('error.html', message='upload failed')
+
 
 
 @bp.route('/upload_succeed', methods=['GET'])

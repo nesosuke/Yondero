@@ -657,3 +657,7 @@ components:
             starred:
               type: integer
               example: "1"
+              
+    access_token:
+      type: string
+      example: "access_token"

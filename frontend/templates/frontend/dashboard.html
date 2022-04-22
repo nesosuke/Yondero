@@ -1,0 +1,43 @@
+{%extends 'base.html'%} {%block title%}dashboard{%endblock%} {%block body%}
+<h1>dashboard</h1>
+<div class="summary">
+  <!-- show user data  -->
+  <span class="profile">
+    <img src="{{user.avatar}}" alt="{{user.name}}" class="avatar" />
+    <span class="name">{{user.name}}</span>
+  </span>
+  <!-- show items data -->
+  <span class="items_info">
+    <span class="unread">
+      <span class="text">unread items</span>
+      <span class="count">{{unread_count}}</span>
+    </span>
+    <span class="starred">
+      <span class="text">starred items</span>
+      <span class="count">{{starred_count}}</span>
+    </span>
+    <span class="total">
+      <span class="text">total items</span>
+      <span class="count">{{total_count}}</span>
+    </span>
+  </span>
+</div>
+
+# TODO: feed (難しそう)
+{# <div class="feed">
+  <!-- show feed data -->
+  <span class="feed_info">
+    <span class="unread">
+      <span class="text">unread feed</span>
+      <span class="count">{{unread_feed_count}}</span>
+    </span>
+    <span class="starred">
+      <span class="text">starred feed</span>
+      <span class="count">{{starred_feed_count}}</span>
+    </span>
+    <span class="total">
+      <span class="text">total feed</span>
+      <span class="count">{{total_feed_count}}</span>
+    </span>
+  </span>
+</div> #}

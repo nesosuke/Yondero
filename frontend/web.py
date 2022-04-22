@@ -1,9 +1,9 @@
 # from flask_login import login_required
 from flask import (Blueprint, Flask, redirect, render_template, request,
-                   requests, url_for)
+                   url_for)
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-
+import requests
 bp = Blueprint('web', __name__,
                url_prefix='/web',
                static_folder='static/frontend',
@@ -19,6 +19,25 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def get_user_id_from_session(session_id):
+    # TODO get session id from Flask.LoginManager
+
+    user_id = 1  # TODO get user id from session id
+    return user_id
+
+
+def get_user_stats(user_id):
+    url = api_url+'/users/'+user_id
+    token = 1  # TODO get token from Flask.LoginManager
+    headers = {
+        'user_id': user_id,
+        'token': token,
+    }
+    res = requests.get(url, headers=headers).json()
+
+    return res
+
+
 @bp.route('/')
 def index():
     return render_template('index.html')
@@ -32,7 +51,10 @@ def hello():
 # @login_required
 @bp.route('/dashboard', methods=['GET'])
 def dashboard():
-    return render_template('dashboard.html')
+    user_id = get_user_id_from_session(1)  # TODO get session id from Flask.LoginManager
+    stats=get_user_stats(user_id)
+    return render_template('dashboard.html',stats=stats)
+
 
 
 # @login_required
@@ -70,7 +92,7 @@ def upload():
     user_id = 1  # TODO: get user_id from session
 
     itemdata = {
-        'user_id': user_id, '
+        'user_id': user_id,
         'title': body['title'],
         'authors': body['authors'],
         'year': body['year'],

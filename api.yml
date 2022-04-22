@@ -108,6 +108,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/500"
 
+  /stats:
+    get:
+      tags:
+        - "Stats"
+      description: "Get stats"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/stats"
+        500:
+          description: "Internal server error"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/500"
   /search:
     post:
       tags:
@@ -583,3 +601,19 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/item"
+
+    stats:
+      type: object
+      properties:
+        stats:
+          type: object
+          properties:
+            total:
+              type: integer
+              example: "1"
+            unread:
+              type: integer
+              example: "1"
+            starred:
+              type: integer
+              example: "1"

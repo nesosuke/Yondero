@@ -174,6 +174,7 @@ def item_update():
 def item_upload():
     '''
     Upload file and metadata to server
+    #TODO ファイルの取り扱いできてない -> 400になる
     '''
     # data = request.get_data()
     req=request

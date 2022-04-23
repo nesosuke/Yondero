@@ -14,17 +14,9 @@ paths:
       description: "Get all the available endpoints"
       responses:
         200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/endpoints"
+          $ref: "#/components/responses/success"
         500:
-          description: "Internal server error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
+          $ref: "#/components/responses/internal_server_error"
 
   /register:
     post:
@@ -32,31 +24,14 @@ paths:
         - User
       description: "Register a new user"
       requestBody:
-        description: "User data"
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/admin_user"
+        $ref: "#/components/requestBodies/userdata"
       responses:
         200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/admin_user"
+          $ref: "#/components/responses/success"
         400:
-          description: "Bad request"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/400"
+          $ref: "#/components/responses/bad_request"
         500:
-          description: "Internal server error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
+          $ref: "#/components/responses/internal_server_error"
 
   /item/cite:
     post:
@@ -64,224 +39,324 @@ paths:
         - "Item"
       description: "Return the citation for the item, BibTeX format"
       requestBody:
-        description: "Item data"
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/fetch_header"
+        $ref: "#/components/requestBodies/cite_item"
       responses:
         200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/bibtex"
-
+          $ref: "#/components/responses/success"
         404:
-          description: "Not found"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/404"
-
+          $ref: "#/components/responses/not_found"
         500:
-          description: "Internal server error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
+          $ref: "#/components/responses/internal_server_error"
 
   /item/new:
     post:
       tags:
         - "Item"
       requestBody:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/new_item_header"
+        $ref: "#/components/requestBodies/new_item"
       responses:
         200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/item"
-
+          $ref: "#/components/responses/success"
         400:
-          description: "Bad request"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/400"
-
-        # 401:
-        #   description: "Unauthorized"
-        #   content:
-        #     application/json:
-        #       schema:
-        #         $ref: "#/components/schemas/401"
-
+          $ref: "#/components/responses/bad_request"
+        401:
+          $ref: "#/components/responses/unauthorized"
         500:
-          description: "Internal server error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
+          $ref: "#/components/responses/internal_server_error"
 
   /item/update:
-    post: 
+    post:
       tags:
         - Item
-      description: "Update an item"
+      description: "Update the metadata of an item"
       requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/update_item_header"
+        $ref: "#/components/requestBodies/update_item"
       responses:
-        200: 
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/200"
+        200:
+          $ref: "#/components/responses/success"
         400:
-          description: "Bad request"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/400"
-
+          $ref: "#/components/responses/bad_request"
 
   /item/upload:
     post:
       tags:
         - "Item"
-      description: upload PDF
+      description: upload a file
       requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: "The file to upload"
-
+        $ref: "#/components/requestBodies/upload_item"
       responses:
         200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/upload_success"
-
-        # 401:
-        #   description: "Unauthorized"
-        #   content:
-        #     application/json:
-        #       schema:
-        #         $ref: "#/components/schemas/401"
-
+          $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/unauthorized"
         409:
-          description: "Conflict"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/409"
-
+          $ref: "#/components/responses/conflict"
         500:
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
+          $ref: "#/components/responses/internal_server_error"
 
   /item/download:
     post:
       tags:
         - "Item"
-      description: download PDF of an article
+      description: download PDF of an metadata
       requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/item_id"
+        $ref: "#/components/requestBodies/download_item"
       responses:
         200:
-          description: Download PDF
-          content:
-            file:
-              schema:
-                type: string
-                format: binary
-                description: "The file to download"
-        # 401:
-        #   description: "Unauthorized"
-        #   content:
-        #     application/json:
-        #       schema:
-        #         $ref: "#/components/schemas/401"
-
-        # 403:
-        #   description: "Forbidden"
-        #   content:
-        #     application/json:
-        #       schema:
-        #         $ref: "#/components/schemas/403"
-
+          $ref: "#/components/responses/success"
+        401:
+          $ref: "#/components/responses/unauthorized"
+        403:
+          $ref: "#/components/responses/forbidden"
         404:
-          description: "Not Found"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/404"
-
+          $ref: "#/components/responses/not_found"
         500:
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
+          $ref: "#/components/responses/internal_server_error"
 
   /item/all:
     post:
       tags:
         - "Item"
-      description: Fetch all items
+      description: Fetch all metadata
       responses:
         200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/all_items"
-
-        # 403:
-        #   description: "Forbidden"
-        #   content:
-        #     application/json:
-        #       schema:
-        #         $ref: "#/components/schemas/403"
-
+          $ref: "#/components/responses/success"
+        403:
+          $ref: "#/components/responses/forbidden"
         500:
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
+          $ref: "#/components/responses/internal_server_error"
 
 components:
-  schemas:
-    item_id:
-      type: string
-      example: "1"
+  requestBodies:
+    userdata:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/userdata"
+    cite_item:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              item_id:
+                $ref: "#/components/schemas/item_id"
+              user_id:
+                $ref: "#/components/schemas/user_id"
+    new_item:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              user_id:
+                $ref: "#/components/schemas/user_id"
+              metadata:
+                $ref: "#/components/schemas/metadata"
+    update_item:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              user_id:
+                $ref: "#/components/schemas/user_id"
+              item_id:
+                $ref: "#/components/schemas/item_id"
+              metadata:
+                $ref: "#/components/schemas/metadata"
+    upload_item:
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              user_id:
+                $ref: "#/components/schemas/user_id"
+              item_id:
+                $ref: "#/components/schemas/item_id"
+              file:
+                $ref: "#/components/schemas/file"
+    download_item:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              user_id:
+                $ref: "#/components/schemas/user_id"
+              item_id:
+                $ref: "#/components/schemas/item_id"
 
+  responses:
+    success:
+      description: "Success"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/success"
+    bad_request:
+      description: "Bad request"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/bad_request"
+    unauthorized:
+      description: "Unauthorized"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/unauthorized"
+    forbidden:
+      description: "Forbidden"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/forbidden"
+    not_found:
+      description: "Not found"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/not_found"
+    conflict:
+      description: "Conflict"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/conflict"
+    internal_server_error:
+      description: "Internal server error"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/internal_server_error"
+
+  schemas:
+    # item data
+    metadata:
+      type: object
+      properties:
+        doi:
+          $ref: "#/components/schemas/doi"
+        title:
+          $ref: "#/components/schemas/title"
+        authors:
+          $ref: "#/components/schemas/authors"
+        journal:
+          $ref: "#/components/schemas/journal"
+        volume:
+          $ref: "#/components/schemas/volume"
+        issue:
+          $ref: "#/components/schemas/issue"
+        pages:
+          $ref: "#/components/schemas/pages"
+        year:
+          $ref: "#/components/schemas/year"
+        url:
+          $ref: "#/components/schemas/url"
+    item_id:
+      type: integer
+      example: 1
+    doi:
+      type: string
+      example: "10.2307/1969529"
+    title:
+      type: string
+      example: "Non-Cooperative Games"
+    authors:
+      type: array
+      items:
+        type: string
+        example: "John Nash"
+    journal:
+      type: string
+      example: "Annals of Mathematics"
+    volume:
+      type: string
+      example: "54"
+    issue:
+      type: string
+      example: "2"
+    pages:
+      type: string
+      example: "286--295"
+    year:
+      type: string
+      example: "1951"
+    url:
+      type: string
+      example: "http://www.jstor.org/stable/1969529"
+    file:
+      type: string
+      format: binary
+
+    # user data
+    userdata:
+      type: object
+      properties:
+        user_id:
+          $ref: "#/components/schemas/user_id"
+        username:
+          $ref: "#/components/schemas/username"
+        password:
+          $ref: "#/components/schemas/password"
+    user_id:
+      type: integer
+      example: 1
+    username:
+      type: string
+      example: "admin"
+    password:
+      type: string
+      example: "admin"
+    # HTTP status codes
+    success:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Success"
+    bad_request:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Bad Request"
+    unauthorized:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unauthorized"
+    forbidden:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Forbidden"
+    not_found:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Not Found"
+    conflict:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Conflict"
+    internal_server_error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Internal Server Error"
+    # Misc
     bibtex:
-      example: "@article{10.2307/1969529,\n
+      example: |
+        "@article{10.2307/1969529,\n
         ISSN = {0003486X},\n
         URL = {http://www.jstor.org/stable/1969529},\n
         author = {John Nash},\n
@@ -294,345 +369,3 @@ components:
         volume = {54},\n
         year = {1951}\n
         }"
-
-    endpoints:
-      type: object
-      properties:
-        endpoints:
-          type: array
-          items:
-            type: string
-            example:
-              - "GET: /item/cite"
-              - "GET: /item/{item_id}"
-              - "POST: /item/{item_id}/download"
-              - "POST: /item/{item_id}/upload"
-              - "POST: /item/search"
-              - "POST: /login"
-              - "POST: /logout"
-
-    article:
-      type: object
-      properties:
-        doi:
-          type: string
-          example: "10.2307/1969529"
-        title:
-          type: string
-          example: "Non-Cooperative Games"
-        authors:
-          type: array
-          items:
-            type: string
-            example: "John Nash"
-        journal:
-          type: string
-          example: "Annals of Mathematics"
-        volume:
-          type: string
-          example: "54"
-        issue:
-          type: string
-          example: "2"
-        pages:
-          type: string
-          example: "286--295"
-        year:
-          type: string
-          example: "1951"
-        url:
-          type: string
-          example: "http://www.jstor.org/stable/1969529"
-
-    doi:
-      type: string
-      example: "10.2307/1969529"
-
-    fetch_header:
-      type: object
-      required:
-        - doi
-      properties:
-        item_id:
-          type: string
-          example: "1"
-
-    search_results:
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/article"
-        total:
-          type: integer
-          example: "1"
-
-    upload_success:
-      type: object
-      properties:
-        message:
-          type: object
-          example:
-            message: "Success - PDF uploaded"
-            id: "1"
-
-    500:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Server Internal Error"
-
-    404:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Not Found"
-
-    item:
-      type: object
-      properties:
-        item_id:
-          type: string
-          example: "1"
-        doi:
-          type: string
-          example: "10.2307/1969529"
-        title:
-          type: string
-          example: "Non-Cooperative Games"
-        authors:
-          type: array
-          items:
-            type: string
-            example: "John Nash"
-        journal:
-          type: string
-          example: "Annals of Mathematics"
-        volume:
-          type: string
-          example: "54"
-        issue:
-          type: string
-          example: "2"
-        pages:
-          type: string
-          example: "286--295"
-        year:
-          type: string
-          example: "1951"
-        type:
-          type: string
-          example: "article"
-        url:
-          type: string
-          example: "http://www.jstor.org/stable/1969529"
-        read:
-          type: boolean
-          example: "false"
-        note:
-          type: string
-          example: "This is a note"
-        file_id:
-          type: string
-          example: "1"
-        added_at:
-          type: string
-          example: "2020-04-19T12:00:00.000Z"
-
-    400:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Bad Request"
-
-    401:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Unauthorized"
-
-    409:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Conflict"
-
-    userdata:
-      type: object
-      properties:
-        username:
-          type: string
-          example: "john"
-        password:
-          type: string
-          example: "password(hashed)"
-        email:
-          type: string
-          example: "example@example.com"
-    user_id:
-      type: string
-      example: "1"
-
-    403:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Forbidden"
-
-    200:
-      type: object
-      properties:
-        message:
-          type: string
-          example: "Success"
-
-    session_id:
-      type: object
-      properties:
-        session_id:
-          type: string
-          example: "session_id"
-
-    all_items:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/item"
-
-    stats:
-      type: object
-      properties:
-        stats:
-          type: object
-          properties:
-            total:
-              type: integer
-              example: "1"
-            unread:
-              type: integer
-              example: "1"
-            starred:
-              type: integer
-              example: "1"
-              
-    access_token:
-      type: string
-      example: "access_token"
-
-    authorization_header:
-      type: string
-      example: "Bearer access_token"
-
-    new_item_header:
-      type: object
-      properties:
-        doi:
-          type: string
-          example: "10.2307/1969529"
-        title:
-          type: string
-          example: "Non-Cooperative Games"
-        authors:
-          type: array
-          items:
-            type: string
-            example: "John Nash"
-        journal:
-          type: string
-          example: "Annals of Mathematics"
-        volume:
-          type: string
-          example: "54"
-        issue:
-          type: string
-          example: "2"
-        pages:
-          type: string
-          example: "286--295"
-        year:
-          type: string
-          example: "1951"
-        type:
-          type: string
-          example: "article"
-        url:
-          type: string
-          example: "http://www.jstor.org/stable/1969529"
-        read:
-          type: boolean
-          example: "false"
-        note:
-          type: string
-          example: "This is a note"
-
-    update_item_header:
-      type: object
-      properties:
-        item_id:
-          type: string
-          example: "1"
-        doi:
-          type: string
-          example: "10.2307/1969529"
-        title:
-          type: string
-          example: "Non-Cooperative Games"
-        authors:
-          type: array
-          items:
-            type: string
-            example: "John Nash"
-        journal:
-          type: string
-          example: "Annals of Mathematics"
-        volume:
-          type: string
-          example: "54"
-        issue:
-          type: string
-          example: "2"
-        pages:
-          type: string
-          example: "286--295"
-        year:
-          type: string
-          example: "1951"
-        type:
-          type: string
-          example: "article"
-        url:
-          type: string
-          example: "http://www.jstor.org/stable/1969529"
-        read:
-          type: boolean
-          example: "false"
-        note:
-          type: string
-          example: "This is a note"
-    admin_username:
-      type: string
-      example: "admin"
-    admin_password:
-      type: string
-      example: "admin"
-    admin_user_id:
-      type: string
-      example: "0"
-    admin_user: 
-      type: object
-      properties:
-        username:
-          type: string
-          example: "admin"
-        password:
-          type: string
-          example: "admin"

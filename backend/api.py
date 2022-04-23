@@ -1,5 +1,6 @@
 from io import BytesIO
 from flask import Blueprint, Flask, abort, jsonify, request, send_file, url_for
+from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
 
@@ -36,7 +37,7 @@ def find_attatchments_dir(base_dir: str, user_id: int) -> str:
 
 def validate_filesize(file: bytes, max_filesize: int) -> bool:
     # TODO: 分離 -> fileio.py
-    if file.__sizeof__ > max_filesize:
+    if file.__sizeof__() > max_filesize:
         return False
     return True
 
@@ -61,7 +62,7 @@ def read_username_and_password(json_data) -> tuple | None:
         password = json_data['password']
     except KeyError:
         abort(400)
-    return
+    return username, password
 
 
 def read_item_id(json_data) -> int | None:
@@ -80,7 +81,7 @@ def read_file(data) -> bytes | None:
     リクエストボディからファイルを取得する
     '''
     try:
-        file = data['file']
+        file = data.files['file']
     except KeyError:
         abort(400)
     return file
@@ -142,7 +143,7 @@ def item_cite():
 @bp.route('/item/new', methods=['POST'])
 def item_new():
     '''
-    Add new item to database -> 200,400,500
+    Add new item to database
     '''
     json_data = request.get_json()
     user_id = read_user_id(json_data)
@@ -172,15 +173,16 @@ def item_update():
 @bp.route('/item/upload', methods=['POST'])
 def item_upload():
     '''
-    Upload file and metadata to server -> 200,409,500
+    Upload file and metadata to server
     '''
-    data = request.get_data()
-    file = read_file(data)
+    # data = request.get_data()
+    req=request
+    file = read_file(req)
     if not validate_filesize(file, max_filesize):
         abort(413)
-    filename = file.filename
+    filename = secure_filename(file.filename)
 
-    json_data = request.get_json()
+    json_data = req.get_json()
     user_id = read_user_id(json_data)
     item_id = read_item_id(json_data)
 
@@ -205,7 +207,7 @@ def item_upload():
 @bp.route('/item/download', methods=['POST'])
 def item_download():
     '''
-    Return file from server -> 200,404,500
+    Return file from server
     '''
     json_data = request.get_json()
     user_id = read_user_id(json_data)
@@ -229,7 +231,7 @@ def item_download():
 @bp.route('/item/all', methods=['POST'])
 def item_all():
     '''
-    Return all items in database -> 200,404,500
+    Return all items in database
     '''
     json_data = request.get_json()
     user_id = read_user_id(json_data)

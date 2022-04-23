@@ -18,8 +18,8 @@ def init_db():
     with conn.cursor() as cur:
         cur.execute('''
         CREATE TABLE IF NOT EXISTS metadata (
-            item_id SERIAL PRIMARY KEY NOT NULL,
-            user_id integer NOT NULL,
+            item_id serial PRIMARY KEY NOT NULL,
+            user_id serial NOT NULL,
             title TEXT NOT NULL,
             type TEXT,
             authors TEXT,
@@ -34,20 +34,20 @@ def init_db():
             keywords TEXT,
             tags TEXT,
             note TEXT,
-            file_id integer UNIQUE,
+            file_id serial UNIQUE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
         ''')
         cur.execute('''
         CREATE TABLE IF NOT EXISTS attatchments (
-            file_id SERIAL PRIMARY KEY NOT NULL,
-            item_id integer NOT NULL,
+            file_id serial PRIMARY KEY NOT NULL,
+            item_id serial NOT NULL,
             filepath TEXT
         )
         ''')
         cur.execute('''
         CREATE TABLE IF NOT EXISTS users (
-            user_id SERIAL PRIMARY KEY NOT NULL,
+            user_id serial PRIMARY KEY NOT NULL,
             username TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
             created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -62,7 +62,7 @@ def find_file_id(user_id: int, item_id: int) -> int | Literal['not found']:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT file_id FROM metadata (user_id,item_id) VALUES (%s,%s)
+        SELECT file_id FROM metadata WHERE (user_id=%s AND item_id=%s)
         ''', (user_id, item_id))
         res = cur.fetchone()
     if res is None:
@@ -77,7 +77,7 @@ def find_file_path(file_id: int) -> str | Literal['not found']:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT filepath FROM attatchments (file_id) VALUES (%s)
+        SELECT filepath FROM attatchments WHERE (file_id=%s)
         ''', (file_id,))
         res = cur.fetchone()
     if res is None:
@@ -92,7 +92,7 @@ def find_metadata(user_id: int, item_id: int) -> dict | Literal['not found']:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT * FROM metadata (user_id,item_id) VALUES (%s,%s)
+        SELECT * FROM metadata WHERE (user_id=%s AND item_id=%s)
         ''', (user_id, item_id))
         res = cur.fetchone()
     if res is None:
@@ -109,9 +109,10 @@ def add_metadata(user_id: int, metadata: dict) -> int | Literal['not found']:
     with conn.cursor() as cur:
         cur.execute('''
         INSERT INTO metadata (user_id,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags,note) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING item_id
         ''', (user_id, metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note']))
+        res = cur.fetchone()[0]
         conn.commit()
-    res = cur.lastrowid
     if res is None:
         return "not found"
     item_id = res
@@ -124,10 +125,12 @@ def update_metadata(user_id: int, item_id: int, metadata: dict) -> int | Literal
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        UPDATE metadata (user_id,item_id,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags,note) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        ''', (user_id, item_id, metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note']))
+        UPDATE metadata SET title=%s,authors=%s,year=%s,journal=%s,volume=%s,issue=%s,pages=%s,doi=%s,url=%s,abstract=%s,keywords=%s,tags=%s,note=%s 
+        WHERE (user_id=%s AND item_id=%s)
+        RETURNING item_id
+        ''', (metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note'], user_id, item_id))
+        res = cur.fetchone()[0]
         conn.commit()
-    res = cur.lastrowid
     if res is None:
         return "not found"
     item_id = res
@@ -140,7 +143,7 @@ def find_user_id(username: str) -> int | Literal['not found']:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT user_id FROM users (username) VALUES (%s)
+        SELECT user_id FROM users WHERE (username=%s)
         ''', (username,))
         res = cur.fetchone()
     if res is None:
@@ -155,7 +158,7 @@ def find_username(user_id: int) -> str | Literal['not found']:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT username FROM users (user_id) VALUES (%s)
+        SELECT username FROM users WHERE (user_id=%s)
         ''', (user_id,))
         res = cur.fetchone()
     if res is None:
@@ -170,7 +173,7 @@ def find_password(user_id: int) -> str | Literal['not found']:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT password FROM users (user_id) VALUES (%s)
+        SELECT password FROM users WHERE (user_id =%s)
         ''', (user_id,))
         res = cur.fetchone()
     if res is None:
@@ -188,11 +191,12 @@ def add_user(username: str, password: str) -> int | Literal['something went wron
         try:
             cur.execute('''
             INSERT INTO users (username,password) VALUES (%s,%s)
+            RETURNING user_id
             ''', (username, password_hash))
+            res = cur.fetchone()[0]
             conn.commit()
         except:
             return 'something went wrong'
-    res = cur.lastrowid
     if res is None:
         return 'something went wrong'
     user_id = res
@@ -206,7 +210,7 @@ def is_valid_user(username: str, password: str) -> bool:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT password FROM users (username) VALUES (%s)
+        SELECT password FROM users WHERE (username=%s)
         ''', (username,))
         res = cur.fetchone()
     if res is None:
@@ -221,7 +225,7 @@ def find_item_id(file_id: int) -> int | Literal['not found']:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT item_id FROM metadata (file_id) VALUES (%s)
+        SELECT item_id FROM metadata WHERE (file_id=%s)
         ''', (file_id,))
         res = cur.fetchone()
     if res is None:
@@ -232,14 +236,15 @@ def find_item_id(file_id: int) -> int | Literal['not found']:
 
 def add_file(user_id: int, item_id: int, filepath: str) -> int | Literal['something went wrong']:
     '''
-    DB files にファイルを挿入 -> item_id
+    DB files にファイルを挿入 -> file_id
     '''
     with conn.cursor() as cur:
         cur.execute('''
         INSERT INTO files (user_id,item_id,filepath) VALUES (%s,%s,%s)
+        RETURNING file_id
         ''', (user_id, item_id, filepath))
+        res = cur.fetchone()[0]
         conn.commit()
-    res = cur.lastrowid
     if res is None:
         return 'something went wrong'
     file_id = res
@@ -248,14 +253,16 @@ def add_file(user_id: int, item_id: int, filepath: str) -> int | Literal['someth
 
 def replace_file(user_id: int, item_id: int, filepath: str) -> int | Literal['something went wrong']:
     '''
-    DB files にファイルを挿入 -> item_id
+    DB attatchments にファイルを挿入 -> item_id
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        UPDATE files (user_id,item_id,filepath) VALUES (%s,%s,%s)
-        ''', (user_id, item_id, filepath))
+        UPDATE attatchments SET filepath=%s 
+        WHERE user_id=%s AND item_id=%s
+        RETURNING file_id
+        ''', (filepath, user_id, item_id))
+        res = cur.fetchone()[0]
         conn.commit()
-    res = cur.lastrowid
     if res is None:
         return 'something went wrong'
     file_id = res
@@ -268,7 +275,7 @@ def find_all_metadata(user_id: int) -> list | Literal['not found']:
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT * FROM metadata (user_id) VALUES (%s)
+        SELECT * FROM metadata WHERE (user_id=%s)
         ''', (user_id,))
         res = cur.fetchall()
     if res is None:

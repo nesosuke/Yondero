@@ -197,31 +197,3 @@ def item_all():
     return jsonify(metadata)
 
 
-@bp.route('/stats', methods=['GET'])
-def stats():
-    '''
-    Return statistics of items in database -> 200,404,500
-    '''
-    if request.get_json('user_id') is None:
-        abort(410)
-    user_id = request.get_json()
-
-    res = postgres.get_all_metadata(user_id)
-    if res is None:
-        abort(404)
-    metadata = res
-
-    # TODO: to calculate statistics of items
-    stats = {}
-
-    return jsonify(stats)
-
-
-@bp.route('/debug', methods=['GET', 'POST'])
-def debug():
-    '''
-    Return request
-    '''
-    return jsonify(request.headers.get('user_id'))
-    #FIXME request.header.get('user_id')にする．
-    #FIXME body(=data)は request.get_json()['key']で取得できる．

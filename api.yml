@@ -117,7 +117,7 @@ paths:
           name: admin_user_id
           required: true
           schema:
-            $ref: "#/components/schemas/admin_user_id
+            $ref: "#/components/schemas/admin_user_id"
         # - in: header
         #   name: Authorization
         #   required: true

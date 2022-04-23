@@ -5,7 +5,8 @@ services:
     restart: always
     volumes:
       - ./db_data:/var/lib/postgresql/data
-
+      - ./attatchmnents:/data/attatchments
+      - ./logs:/app/logs
     ports:
       - "5432:5432"
     networks:
@@ -30,6 +31,7 @@ services:
     networks:
       - internal_network
       - external_network
+    command: sh -c ". ~/.profile && poetry run gunicorn run:app --config /app/config/gunicorn.conf.py"
 
 networks:
   internal_network:

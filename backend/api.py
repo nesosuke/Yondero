@@ -19,7 +19,7 @@ CORS(api)
 bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
 
-base_dir = '/data/attatchments'
+base_dir = 'attatchments'
 max_filesize = 50*1024*1024
 
 

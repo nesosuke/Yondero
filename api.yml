@@ -70,17 +70,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/fetch_header"
-      parameters:
-        # - in: header
-        #   name: Authorization
-        #   required: true
-        #   schema:
-        #     $ref: "#/components/schemas/authorization_header"
-        - in: header
-          name: admin_user_id
-          required: true
-          schema:
-            $ref: "#/components/schemas/admin_user_id"
       responses:
         200:
           description: "Success"
@@ -112,17 +101,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/new_item_header"
-      parameters:
-        - in: header
-          name: admin_user_id
-          required: true
-          schema:
-            $ref: "#/components/schemas/admin_user_id"
-        # - in: header
-        #   name: Authorization
-        #   required: true
-        #   schema:
-        #     $ref: "#/components/schemas/authorization_header"
       responses:
         200:
           description: "Success"
@@ -162,17 +140,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/update_item_header"
-      parameters:
-        # - in: header
-        #   name: Authorization
-        #   required: true
-        #   schema:
-        #     $ref: "#/components/schemas/authorization_header"
-        - in: header
-          name: admin_user_id
-          required: true
-          schema:
-            $ref: "#/components/schemas/admin_user_id"
       responses:
         200: 
           description: "Success"
@@ -193,17 +160,6 @@ paths:
       tags:
         - "Item"
       description: upload PDF
-      parameters:
-      #   - in: header
-      #     name: Authorization
-      #     required: true
-      #     schema:
-      #       $ref: "#/components/schemas/authorization_header"
-        - in: header
-          name: admin_user_id
-          required: true
-          schema:
-            $ref: "#/components/schemas/admin_user_id"
       requestBody:
         content:
           multipart/form-data:
@@ -245,21 +201,10 @@ paths:
                 $ref: "#/components/schemas/500"
 
   /item/download:
-    get:
+    post:
       tags:
         - "Item"
       description: download PDF of an article
-      parameters:
-        # - in: header
-        #   name: Authorization
-        #   required: true
-        #   schema:
-        #     $ref: "#/components/schemas/authorization_header"
-        - in: header
-          name: admin_user_id
-          required: true
-          schema:
-            $ref: "#/components/schemas/admin_user_id"
       requestBody:
         content:
           application/json:
@@ -303,21 +248,10 @@ paths:
                 $ref: "#/components/schemas/500"
 
   /item/all:
-    get:
+    post:
       tags:
         - "Item"
       description: Fetch all items
-      parameters:
-      #   - in: header
-      #     name: Authorization
-      #     required: true
-      #     schema:
-      #       $ref: "#/components/schemas/authorization_header"
-        - in: header
-          name: admin_user_id
-          required: true
-          schema:
-            $ref: "#/components/schemas/admin_user_id"
       responses:
         200:
           description: "Success"

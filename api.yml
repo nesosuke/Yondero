@@ -151,54 +151,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/500"
-  /item/{item_id}:
-    post:
-      deprecated: true # /item/cite　で代用できる気がする
-      tags:
-        - "Item"
-      description: Fetch an item by its item_id
 
-      parameters:
-        - in: path
-          name: item_id
-          required: true
-          schema:
-            type: string
-            $ref: "#/components/schemas/item_id"
-        # - in: header
-        #   name: Authorization
-        #   required: true
-        #   schema:
-        #     $ref: "#/components/schemas/authorization_header"
-
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/item"
-
-        # 403:
-        #   description: "Forbidden"
-        #   content:
-        #     application/json:
-        #       schema:
-        #         $ref: "#/components/schemas/403"
-
-        404:
-          description: "Not Found"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/404"
-
-        500:
-          description: "Internal Server Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
   /item/update:
     post: 
       tags:
@@ -234,99 +187,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/400"
 
-  /stats:
-    get:
-      tags:
-        - "Stats"
-      deprecated: true
-      description: "Get stats. The reason for deprecated is not yet clear for specification."
-      parameters:
-      #   - in: header
-      #     name: Authorization
-      #     required: true
-      #     schema:
-      #       $ref: "#/components/schemas/authorization_header"
-        - in: header
-          name: admin_user_id
-          required: true
-          schema:
-            $ref: "#/components/schemas/admin_user_id"
-
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/stats"
-        500:
-          description: "Internal server error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
-  /search:
-    post:
-      tags:
-        - "Search"
-      deprecated: true
-      description: "Search for own items. The reason for deprecated is the specification is not clear. This endpoint is not used in the current version of the API."
-      parameters:
-        - in: header
-          name: search_query
-          required: true
-          schema:
-            type: object
-            properties:
-              query:
-                type: string
-                description: "The query to search for"
-              limit:
-                type: integer
-                description: "The maximum number of results to return"
-              offset:
-                type: integer
-                description: "The offset to start the results from"
-              sort:
-                type: string
-                description: "The field to sort the results by"
-              order:
-                type: string
-                description: "The order to sort the results by"
-        # - in: header
-        #   name: Authorization
-        #   required: true
-        #   schema:
-        #     $ref: "#/components/schemas/authorization_header"
-
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/search_results"
-
-        # 401:
-        #   description: "Unauthorized"
-        #   content:
-        #     application/json:
-        #       schema:
-        #         $ref: "#/components/schemas/401"
-
-        404:
-          description: "No results found"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/404"
-
-        500:
-          description: "Internal server "
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
 
   /item/upload:
     post:
@@ -575,40 +435,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/400"
 
-  /auth/token:
-    post:
-      tags:
-        - Auth
-      deprecated: true
-      description: Get a token．認証難しすぎワロタ．
-      parameters:
-        - in: header
-          name: body
-          required: true
-          schema:
-            $ref: "#/components/schemas/userdata"
 
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/access_token"
-
-        401:
-          description: "Unauthorized"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/401"
-
-        500:
-          description: "Error"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/500"
 components:
   schemas:
     item_id:

@@ -1,4 +1,5 @@
 import os
+from typing_extensions import Literal
 import psycopg2
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -8,26 +9,8 @@ db_config = {
     'dbname': 'yondero',
     'user': 'postgres',
     'password': 'postgres'
-
-
 }
 conn = psycopg2.connect(**db_config)
-attatchment_base_dir = 'attatchment/'
-
-
-# initialize attatchment dir
-def get_attatchment_dir(user_id):
-    if os.path.exists(attatchment_base_dir + user_id):
-        path = attatchment_base_dir + user_id + '/'
-        return path
-    os.mkdir(attatchment_base_dir + user_id)
-    path = attatchment_base_dir + user_id + '/'
-    return path
-
-def limit_filesize(filedata, max_filesize=50 * 1024 * 1024):
-    if len(filedata) > max_filesize:
-        raise ValueError('File size is too large')
-    return filedata
 
 
 def init_db():
@@ -36,9 +19,9 @@ def init_db():
         cur.execute('''
         CREATE TABLE IF NOT EXISTS metadata (
             item_id SERIAL PRIMARY KEY NOT NULL,
-            user_id TEXT NOT NULL,
+            user_id integer NOT NULL,
             title TEXT NOT NULL,
-            type TEXT NOT NULL,
+            type TEXT,
             authors TEXT,
             year INTEGER,
             journal TEXT,
@@ -51,13 +34,14 @@ def init_db():
             keywords TEXT,
             tags TEXT,
             note TEXT,
+            file_id integer UNIQUE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         )
         ''')
         cur.execute('''
         CREATE TABLE IF NOT EXISTS attatchments (
-            object_id SERIAL PRIMARY KEY NOT NULL,
-            item_id SERIAL NOT NULL,
+            file_id SERIAL PRIMARY KEY NOT NULL,
+            item_id integer NOT NULL,
             filepath TEXT
         )
         ''')
@@ -72,173 +56,222 @@ def init_db():
         conn.commit()
 
 
-# handle user
-def get_user_id_from_username(username):
+def find_file_id(user_id: int, item_id: int) -> int | Literal['not found']:
+    '''
+    DB metadata からfile_idを探す -> int
+    '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT user_id FROM users WHERE username = %s
-        ''', (username,))
-        user_id = cur.fetchone()
-    if user_id is None:
-        return None
-    return user_id[0]
+        SELECT file_id FROM metadata (user_id,item_id) VALUES (%s,%s)
+        ''', (user_id, item_id))
+        res = cur.fetchone()
+    if res is None:
+        return "not found"
+    file_id = res[0]
+    return file_id
 
 
-def create_user(username, password):
-    password_hash = generate_password_hash(password)
+def find_file_path(file_id: int) -> str | Literal['not found']:
+    '''
+    DB attatchments からfilepathを探す -> str
+    '''
     with conn.cursor() as cur:
         cur.execute('''
-        INSERT INTO users (username, password) VALUES (%s, %s)
-        ''', (username, password_hash))
+        SELECT filepath FROM attatchments (file_id) VALUES (%s)
+        ''', (file_id,))
+        res = cur.fetchone()
+    if res is None:
+        return "not found"
+    filepath = res[0]
+    return filepath
+
+
+def find_metadata(user_id: int, item_id: int) -> dict | Literal['not found']:
+    '''
+    DB metadata からmetadataを探す -> dict
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT * FROM metadata (user_id,item_id) VALUES (%s,%s)
+        ''', (user_id, item_id))
+        res = cur.fetchone()
+    if res is None:
+        return "not found"
+    metadata = dict(zip(res[0].keys(), res[0]))
+    del metadata['file_id']
+    return metadata
+
+
+def add_metadata(user_id: int, metadata: dict) -> int | Literal['not found']:
+    '''
+    DB metadata にmetadataを挿入 -> int
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        INSERT INTO metadata (user_id,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags,note) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        ''', (user_id, metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note']))
         conn.commit()
-        user_id = cur.lastrowid
-    if user_id is None:
-        return None
+    res = cur.lastrowid
+    if res is None:
+        return "not found"
+    item_id = res
+    return item_id
+
+
+def update_metadata(user_id: int, item_id: int, metadata: dict) -> int | Literal['not found']:
+    '''
+    DB metadata にmetadataを更新 -> int
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        UPDATE metadata (user_id,item_id,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags,note) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        ''', (user_id, item_id, metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note']))
+        conn.commit()
+    res = cur.lastrowid
+    if res is None:
+        return "not found"
+    item_id = res
+    return item_id
+
+
+def find_user_id(username: str) -> int | Literal['not found']:
+    '''
+    DB users からuser_idを探す -> int
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT user_id FROM users (username) VALUES (%s)
+        ''', (username,))
+        res = cur.fetchone()
+    if res is None:
+        return 'not found'
+    user_id = res[0]
     return user_id
 
 
-def check_password(username, password):
-    with conn.cursor() as cur:
-        cur.execute('''
-        SELECT password FROM users WHERE username = %s
-        ''', (username,))
-        password_hash = cur.fetchone()
-    if password_hash is None:
-        return False
-    return check_password_hash(password_hash[0], password)
-
-# handle metadata
-
-
-def add_metadata(metadata: dict):
+def find_username(user_id: int) -> str | Literal['not found']:
     '''
-    Add metadata to database
+    DB users からusernameを探す -> str
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        INSERT INTO metadata (user_id, title, authors, year, journal, volume, issue, pages, doi, url, abstract, keywords, tags, note) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ''', (metadata['user_id'], metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note']))
-        conn.commit()
-    item_id = cur.lastrowid
-    if item_id is None:
-        return None
-    return item_id
-
-
-def get_metadata(item_id):
-    '''
-    Return metadata from database
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        SELECT * FROM metadata WHERE item_id = %s
-        ''', (item_id,))
-        metadata = cur.fetchone()
-    if metadata is None:
-        return None
-    metadata = dict(zip(metadata.keys(), metadata))
-    return metadata
-
-
-def update_metadata(item_id, metadata: dict):
-    '''
-    Update metadata in database
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        UPDATE metadata SET user_id = %s, title = %s, authors = %s, year = %s, journal = %s, volume = %s, issue = %s, pages = %s, doi = %s, url = %s, abstract = %s, keywords = %s, tags = %s, note = %s WHERE item_id = %s
-        ''', (metadata['user_id'], metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note'], item_id))
-        conn.commit()
-    item_id = cur.lastrowid
-    if item_id is None:
-        return None
-
-    return item_id
-
-
-def get_all_metadata(user_id):
-    '''
-    Return all metadata from database
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        SELECT * FROM metadata WHERE user_id = %s
+        SELECT username FROM users (user_id) VALUES (%s)
         ''', (user_id,))
-        metadata = cur.fetchall()
-    if metadata is None:
-        return None
-    metadata = [dict(zip(metadata.keys(), metadata)) for metadata in metadata]
-    return metadata
-
-
-# handle attatchment file
-def save_new_attatchment(filedata, filename, user_id):
-    '''
-    Save new file to local, S3, or database
-    '''
-    if filedata is None:
-        return None
-    filedata = limit_filesize(filedata)
-
-    filepath = get_attatchment_dir(user_id)+filename
-    with open(filepath, 'wb') as f:
-        f.write(filedata)
-
-    title = filename
-    metadata = {'title': title}
-    res = add_metadata(metadata)
+        res = cur.fetchone()
     if res is None:
-        return None
-    item_id = res
+        return 'not found'
+    username = res[0]
+    return username
 
+
+def find_password(user_id: int) -> str | Literal['not found']:
+    '''
+    DB users からpasswordを探す -> str
+    '''
     with conn.cursor() as cur:
         cur.execute('''
-        INSERT INTO attatchment (item_id, filepath) VALUES (%s, %s)
-        ''', (item_id, filepath))
+        SELECT password FROM users (user_id) VALUES (%s)
+        ''', (user_id,))
+        res = cur.fetchone()
+    if res is None:
+        return 'not found'
+    password = res[0]
+    return password
+
+
+def add_user(username: str, password: str) -> int | Literal['something went wrong']:
+    '''
+    DB users にユーザーを作成 -> int
+    '''
+    password_hash = generate_password_hash(password)
+    with conn.cursor() as cur:
+        try:
+            cur.execute('''
+            INSERT INTO users (username,password) VALUES (%s,%s)
+            ''', (username, password_hash))
+            conn.commit()
+        except:
+            return 'something went wrong'
+    res = cur.lastrowid
+    if res is None:
+        return 'something went wrong'
+    user_id = res
+    return user_id
+
+
+def is_valid_user(username: str, password: str) -> bool:
+    '''
+    # 将来的（認証の難しさによる）
+    DB users からusernameとpasswordが一致するか確認 -> bool
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT password FROM users (username) VALUES (%s)
+        ''', (username,))
+        res = cur.fetchone()
+    if res is None:
+        return False
+    password_hash = res[0]
+    return check_password_hash(password_hash, password)
+
+
+def find_item_id(file_id: int) -> int | Literal['not found']:
+    '''
+    DB metadata からitem_idを探す -> int
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT item_id FROM metadata (file_id) VALUES (%s)
+        ''', (file_id,))
+        res = cur.fetchone()
+    if res is None:
+        return 'not found'
+    item_id = res[0]
+    return item_id
+
+
+def add_file(user_id: int, item_id: int, filepath: str) -> int | Literal['something went wrong']:
+    '''
+    DB files にファイルを挿入 -> item_id
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        INSERT INTO files (user_id,item_id,filepath) VALUES (%s,%s,%s)
+        ''', (user_id, item_id, filepath))
         conn.commit()
-        object_id = cur.lastrowid
-    if object_id is None:
-        return None
-    return object_id
+    res = cur.lastrowid
+    if res is None:
+        return 'something went wrong'
+    file_id = res
+    return file_id
 
 
-def update_attatchment(filedata, filename, item_id):
+def replace_file(user_id: int, item_id: int, filepath: str) -> int | Literal['something went wrong']:
     '''
-    replace file to local, S3, or database
+    DB files にファイルを挿入 -> item_id
     '''
-    if filedata is None:
-        return None
-    filedata = limit_filesize(filedata)
-    if get_metadata(item_id) is None:
-        return None
-    user_id = get_metadata(item_id)['user_id']
-    filepath = get_attatchment_dir(user_id)+filename
-    with open(filepath, 'wb') as f:
-        f.write(filedata)
-
     with conn.cursor() as cur:
         cur.execute('''
-        INSERT INTO attatchment (item_id, filepath) VALUES (%s, %s)
-        ''', (item_id, filepath))
+        UPDATE files (user_id,item_id,filepath) VALUES (%s,%s,%s)
+        ''', (user_id, item_id, filepath))
         conn.commit()
-        object_id = cur.lastrowid
-    if object_id is None:
-        return None
-    return object_id
+    res = cur.lastrowid
+    if res is None:
+        return 'something went wrong'
+    file_id = res
+    return file_id
 
 
-def get_attatchment(item_id):
+def find_all_metadata(user_id: int) -> list | Literal['not found']:
     '''
-    Return file from local, S3, or database
+    DB metadata から全てのmetadataを探す -> list
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT filepath FROM attatchment WHERE item_id = %s
-        ''', (item_id,))
-        filepath = cur.fetchone()
-    if filepath is None:
-        return None
-    filepath = filepath[0]
-
-    with open(filepath, 'rb') as f:
-        return f.read()
+        SELECT * FROM metadata (user_id) VALUES (%s)
+        ''', (user_id,))
+        res = cur.fetchall()
+    if res is None:
+        return 'not found'
+    metadata_list = [dict(zip(row[0].keys(), row[0])) for row in res]
+    return metadata_list

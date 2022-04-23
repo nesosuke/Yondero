@@ -24,7 +24,7 @@ paths:
         - User
       description: "Register a new user"
       requestBody:
-        $ref: "#/components/requestBodies/userdata"
+        $ref: "#/components/requestBodies/newuser"
       responses:
         200:
           $ref: "#/components/responses/success"
@@ -118,6 +118,8 @@ paths:
       tags:
         - "Item"
       description: Fetch all metadata
+      requestBody:
+        $ref: "#/components/requestBodies/all_item"
       responses:
         200:
           $ref: "#/components/responses/success"
@@ -128,6 +130,11 @@ paths:
 
 components:
   requestBodies:
+    newuser:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/newuser"
     userdata:
       content:
         application/json:
@@ -187,7 +194,14 @@ components:
                 $ref: "#/components/schemas/user_id"
               item_id:
                 $ref: "#/components/schemas/item_id"
-
+    all_item:
+      content:
+        application/json:
+          schema: 
+            type: object
+            properties:
+              user_id:
+                $ref: "#/components/schemas/user_id"
   responses:
     success:
       description: "Success"
@@ -255,6 +269,14 @@ components:
           $ref: "#/components/schemas/year"
         url:
           $ref: "#/components/schemas/url"
+        abstract:
+          $ref: "#/components/schemas/abstract"
+        keywords:
+          $ref: "#/components/schemas/keywords"
+        note:
+          $ref: "#/components/schemas/note"
+        tags:
+          $ref: "#/components/schemas/tags"
     item_id:
       type: integer
       example: 1
@@ -284,6 +306,18 @@ components:
     year:
       type: string
       example: "1951"
+    abstract:
+      type: string
+      example: 'This is an abstract'
+    keywords:
+      type: array
+      example: ["keyword1", "keyword2"]
+    note: 
+      type: string
+      example: "This is a note"
+    tags:
+      type: array
+      example: ["tag1", "tag2"]
     url:
       type: string
       example: "http://www.jstor.org/stable/1969529"
@@ -292,6 +326,13 @@ components:
       format: binary
 
     # user data
+    newuser:
+      type: object
+      properties:
+        username:
+          $ref: "#/components/schemas/username"
+        password:
+          $ref: "#/components/schemas/password"
     userdata:
       type: object
       properties:

@@ -18,7 +18,7 @@ paths:
   /articles:
     get:
       tags:
-        - Articles
+        - Handle Existing Articles
       description: Get list of Articles
       responses:
         200:
@@ -29,8 +29,8 @@ paths:
           $ref: "#/components/responses/internal_server_error"
     post:
       tags:
-        - Articles
-      description: Create a new Article file upload NOT supported -> /attatchment
+        - Handle New Articles
+      description: Create a new article. CANNOT UPLOAD FILE.
       requestBody:
         $ref: "#/components/requestBodies/metadata"
       responses:
@@ -43,10 +43,28 @@ paths:
         500:
           $ref: "#/components/responses/internal_server_error"
 
+  /attachments:
+    post: 
+      tags:
+        - Handle New Attachment
+      description: Create a new attachment. CAN UPLOAD FILE.
+      requestBody:
+        $ref: "#/components/requestBodies/attachment"
+      responses:
+        201:
+          $ref: "#/components/responses/created"
+        400:
+          $ref: "#/components/responses/bad_request"
+        413:
+          $ref: "#/components/responses/payload_too_large"
+        415:  
+          $ref: "#/components/responses/unsupported_media_type"
+        500:
+          $ref: "#/components/responses/internal_server_error"
   /articles/{article_id}:
     get:
       tags:
-        - Articles
+        - Handle Existing Articles
       description: Get an existing Article
       parameters:
         - $ref: "#/components/parameters/article_id"
@@ -59,7 +77,7 @@ paths:
           $ref: "#/components/responses/internal_server_error"
     put:
       tags:
-        - Articles
+        - Handle Existing Articles
       description: Update an existing Article
       parameters:
         - $ref: "#/components/parameters/article_id"
@@ -76,7 +94,7 @@ paths:
           $ref: "#/components/responses/internal_server_error"
     delete:
       tags:
-        - Articles
+        - Handle Existing Articles
       description: Delete an existing Article
       parameters:
         - $ref: "#/components/parameters/article_id"
@@ -87,31 +105,10 @@ paths:
           $ref: "#/components/responses/not_found"
         500:
           $ref: "#/components/responses/internal_server_error"
-  /attatchments:
-    post:
-      tags:
-        - Attatchment
-      description: Create a new Article file upload
-      requestBody:
-        $ref: "#/components/requestBodies/file"
-      responses:
-        201:
-          $ref: "#/components/responses/created"
-        400:
-          $ref: "#/components/responses/bad_request"
-        409:
-          $ref: "#/components/responses/conflict"
-        413:
-          $ref: "#/components/responses/payload_too_large"
-        415:
-          $ref: "#/components/responses/unsupported_media_type"
-        500:
-          $ref: "#/components/responses/internal_server_error"
-
-  /attatchments/{article_id}:
+  /articles/{article_id}/attachment:
     get:
       tags:
-        - Attatchment
+        - Handle Existing Attachment
       description: Get an Article file
       parameters:
         - name: article_id
@@ -127,12 +124,31 @@ paths:
           $ref: "#/components/responses/not_found"
         500:
           $ref: "#/components/responses/internal_server_error"
+    post:
+      tags:
+        - Handle New Attachment
+      description: Create a new Article file upload
+      requestBody:
+        $ref: "#/components/requestBodies/attachment"
+      responses:
+        201:
+          $ref: "#/components/responses/created"
+        400:
+          $ref: "#/components/responses/bad_request"
+        409:
+          $ref: "#/components/responses/conflict"
+        413:
+          $ref: "#/components/responses/payload_too_large"
+        415:
+          $ref: "#/components/responses/unsupported_media_type"
+        500:
+          $ref: "#/components/responses/internal_server_error"
     put:
       tags:
-        - Attatchment
+        - Handle Existing Attachment
       description: Update an existing Article file
       requestBody:
-        $ref: "#/components/requestBodies/file"
+        $ref: "#/components/requestBodies/attachment"
       responses:
         200:
           $ref: "#/components/responses/success"
@@ -148,7 +164,7 @@ paths:
           $ref: "#/components/responses/internal_server_error"
     delete:
       tags:
-        - Attatchment
+        - Handle Existing Attachment
       description: Delete an existing Article file
       parameters:
         - $ref: "#/components/parameters/article_id"
@@ -169,13 +185,13 @@ components:
       name: article_id
       schema:
         $ref: "#/components/schemas/article_id"
-    attatchment_id:
+    attachment_id:
       in: path
       required: true
-      description: Attatchment ID
-      name: attatchment_id
+      description: Attachment ID
+      name: attachment_id
       schema:
-        $ref: "#/components/schemas/attatchment_id"
+        $ref: "#/components/schemas/attachment_id"
   requestBodies:
     metadata:
       description: Article metadata
@@ -183,7 +199,7 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/metadata"
-    file:
+    attachment:
       description: Article file
       content:
         application/json:
@@ -304,7 +320,7 @@ components:
     file:
       type: string
       format: binary
-    attatchment_id:
+    attachment_id:
       type: integer
       example: 1D
 

@@ -9,37 +9,17 @@ servers:
 paths:
   /:
     get:
-      tags:
-        - "Endpoints"
-      description: "Get all the available endpoints"
       responses:
         200:
           $ref: "#/components/responses/success"
         500:
           $ref: "#/components/responses/internal_server_error"
 
-  /register:
-    post:
+  /articles:
+    get:
       tags:
-        - User
-      description: "Register a new user"
-      requestBody:
-        $ref: "#/components/requestBodies/newuser"
-      responses:
-        200:
-          $ref: "#/components/responses/success"
-        400:
-          $ref: "#/components/responses/bad_request"
-        500:
-          $ref: "#/components/responses/internal_server_error"
-
-  /item/cite:
-    post:
-      tags:
-        - "Item"
-      description: "Return the citation for the item, BibTeX format"
-      requestBody:
-        $ref: "#/components/requestBodies/cite_item"
+        - Articles
+      description: Get list of Articles
       responses:
         200:
           $ref: "#/components/responses/success"
@@ -47,161 +27,169 @@ paths:
           $ref: "#/components/responses/not_found"
         500:
           $ref: "#/components/responses/internal_server_error"
-
-  /item/new:
     post:
       tags:
-        - "Item"
+        - Articles
+      description: Create a new Article file upload NOT supported -> /attatchment
       requestBody:
-        $ref: "#/components/requestBodies/new_item"
+        $ref: "#/components/requestBodies/metadata"
       responses:
-        200:
-          $ref: "#/components/responses/success"
+        201:
+          $ref: "#/components/responses/created"
         400:
           $ref: "#/components/responses/bad_request"
-        401:
-          $ref: "#/components/responses/unauthorized"
-        500:
-          $ref: "#/components/responses/internal_server_error"
-
-  /item/update:
-    post:
-      tags:
-        - Item
-      description: "Update the metadata of an item"
-      requestBody:
-        $ref: "#/components/requestBodies/update_item"
-      responses:
-        200:
-          $ref: "#/components/responses/success"
-        400:
-          $ref: "#/components/responses/bad_request"
-
-  /item/upload:
-    post:
-      tags:
-        - "Item"
-      description: upload a file
-      requestBody:
-        $ref: "#/components/requestBodies/upload_item"
-      responses:
-        200:
-          $ref: "#/components/responses/success"
-        401:
-          $ref: "#/components/responses/unauthorized"
         409:
           $ref: "#/components/responses/conflict"
         500:
           $ref: "#/components/responses/internal_server_error"
 
-  /item/download:
-    post:
+  /articles/{article_id}:
+    get:
       tags:
-        - "Item"
-      description: download PDF of an metadata
-      requestBody:
-        $ref: "#/components/requestBodies/download_item"
+        - Articles
+      description: Get an existing Article
+      parameters:
+        - $ref: "#/components/parameters/article_id"
       responses:
         200:
           $ref: "#/components/responses/success"
-        401:
-          $ref: "#/components/responses/unauthorized"
-        403:
-          $ref: "#/components/responses/forbidden"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    put:
+      tags:
+        - Articles
+      description: Update an existing Article
+      parameters:
+        - $ref: "#/components/parameters/article_id"
+      requestBody:
+        $ref: "#/components/requestBodies/metadata"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          $ref: "#/components/responses/bad_request"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    delete:
+      tags:
+        - Articles
+      description: Delete an existing Article
+      parameters:
+        - $ref: "#/components/parameters/article_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+  /attatchments:
+    post:
+      tags:
+        - Attatchment
+      description: Create a new Article file upload
+      requestBody:
+        $ref: "#/components/requestBodies/file"
+      responses:
+        201:
+          $ref: "#/components/responses/created"
+        400:
+          $ref: "#/components/responses/bad_request"
+        409:
+          $ref: "#/components/responses/conflict"
+        413:
+          $ref: "#/components/responses/payload_too_large"
+        415:
+          $ref: "#/components/responses/unsupported_media_type"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+
+  /attatchments/{article_id}:
+    get:
+      tags:
+        - Attatchment
+      description: Get an Article file
+      parameters:
+        - name: article_id
+          in: query
+          description: Article ID
+          required: true
+          schema:
+            $ref: "#/components/schemas/article_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    put:
+      tags:
+        - Attatchment
+      description: Update an existing Article file
+      requestBody:
+        $ref: "#/components/requestBodies/file"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          $ref: "#/components/responses/bad_request"
+        404:
+          $ref: "#/components/responses/not_found"
+        413:
+          $ref: "#/components/responses/payload_too_large"
+        415:
+          $ref: "#/components/responses/unsupported_media_type"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    delete:
+      tags:
+        - Attatchment
+      description: Delete an existing Article file
+      parameters:
+        - $ref: "#/components/parameters/article_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
         404:
           $ref: "#/components/responses/not_found"
         500:
           $ref: "#/components/responses/internal_server_error"
 
-  /item/all:
-    post:
-      tags:
-        - "Item"
-      description: Fetch all metadata
-      requestBody:
-        $ref: "#/components/requestBodies/all_item"
-      responses:
-        200:
-          $ref: "#/components/responses/success"
-        403:
-          $ref: "#/components/responses/forbidden"
-        500:
-          $ref: "#/components/responses/internal_server_error"
-
 components:
+  parameters:
+    article_id:
+      in: path
+      required: true
+      description: Article ID
+      name: article_id
+      schema:
+        $ref: "#/components/schemas/article_id"
+    attatchment_id:
+      in: path
+      required: true
+      description: Attatchment ID
+      name: attatchment_id
+      schema:
+        $ref: "#/components/schemas/attatchment_id"
   requestBodies:
-    newuser:
+    metadata:
+      description: Article metadata
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/newuser"
-    userdata:
+            $ref: "#/components/schemas/metadata"
+    file:
+      description: Article file
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/userdata"
-    cite_item:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              item_id:
-                $ref: "#/components/schemas/item_id"
-              user_id:
-                $ref: "#/components/schemas/user_id"
-    new_item:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              user_id:
-                $ref: "#/components/schemas/user_id"
-              metadata:
-                $ref: "#/components/schemas/metadata"
-    update_item:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              user_id:
-                $ref: "#/components/schemas/user_id"
-              item_id:
-                $ref: "#/components/schemas/item_id"
-              metadata:
-                $ref: "#/components/schemas/metadata"
-    upload_item:
-      content:
-        multipart/form-data:
-          schema:
-            type: object
-            properties:
-              user_id:
-                $ref: "#/components/schemas/user_id"
-              item_id:
-                $ref: "#/components/schemas/item_id"
-              file:
-                $ref: "#/components/schemas/file"
-    download_item:
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              user_id:
-                $ref: "#/components/schemas/user_id"
-              item_id:
-                $ref: "#/components/schemas/item_id"
-    all_item:
-      content:
-        application/json:
-          schema: 
-            type: object
-            properties:
-              user_id:
-                $ref: "#/components/schemas/user_id"
+            $ref: "#/components/schemas/file"
+
   responses:
     success:
       description: "Success"
@@ -209,6 +197,12 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/success"
+    created:
+      description: "Created"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/created"
     bad_request:
       description: "Bad request"
       content:
@@ -239,6 +233,18 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/conflict"
+    payload_too_large:
+      description: "Payload too large"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/payload_too_large"
+    unsupported_media_type:
+      description: "Unsupported media type"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/unsupported_media_type"
     internal_server_error:
       description: "Internal server error"
       content:
@@ -247,39 +253,13 @@ components:
             $ref: "#/components/schemas/internal_server_error"
 
   schemas:
-    # item data
-    metadata:
-      type: object
-      properties:
-        doi:
-          $ref: "#/components/schemas/doi"
-        title:
-          $ref: "#/components/schemas/title"
-        authors:
-          $ref: "#/components/schemas/authors"
-        journal:
-          $ref: "#/components/schemas/journal"
-        volume:
-          $ref: "#/components/schemas/volume"
-        issue:
-          $ref: "#/components/schemas/issue"
-        pages:
-          $ref: "#/components/schemas/pages"
-        year:
-          $ref: "#/components/schemas/year"
-        url:
-          $ref: "#/components/schemas/url"
-        abstract:
-          $ref: "#/components/schemas/abstract"
-        keywords:
-          $ref: "#/components/schemas/keywords"
-        note:
-          $ref: "#/components/schemas/note"
-        tags:
-          $ref: "#/components/schemas/tags"
-    item_id:
+    # article component
+    article_id:
       type: integer
       example: 1
+    article_type:
+      type: string
+      example: "article"
     doi:
       type: string
       example: "10.2307/1969529"
@@ -308,11 +288,11 @@ components:
       example: "1951"
     abstract:
       type: string
-      example: 'This is an abstract'
+      example: "This is an abstract"
     keywords:
       type: array
       example: ["keyword1", "keyword2"]
-    note: 
+    note:
       type: string
       example: "This is a note"
     tags:
@@ -324,33 +304,42 @@ components:
     file:
       type: string
       format: binary
-
-    # user data
-    newuser:
-      type: object
-      properties:
-        username:
-          $ref: "#/components/schemas/username"
-        password:
-          $ref: "#/components/schemas/password"
-    userdata:
-      type: object
-      properties:
-        user_id:
-          $ref: "#/components/schemas/user_id"
-        username:
-          $ref: "#/components/schemas/username"
-        password:
-          $ref: "#/components/schemas/password"
-    user_id:
+    attatchment_id:
       type: integer
-      example: 1
-    username:
-      type: string
-      example: "admin"
-    password:
-      type: string
-      example: "admin"
+      example: 1D
+
+    metadata:
+      type: object
+      properties:
+        doi:
+          $ref: "#/components/schemas/doi"
+        article_type:
+          $ref: "#/components/schemas/article_type"
+        title:
+          $ref: "#/components/schemas/title"
+        authors:
+          $ref: "#/components/schemas/authors"
+        journal:
+          $ref: "#/components/schemas/journal"
+        volume:
+          $ref: "#/components/schemas/volume"
+        issue:
+          $ref: "#/components/schemas/issue"
+        pages:
+          $ref: "#/components/schemas/pages"
+        year:
+          $ref: "#/components/schemas/year"
+        abstract:
+          $ref: "#/components/schemas/abstract"
+        keywords:
+          $ref: "#/components/schemas/keywords"
+        url:
+          $ref: "#/components/schemas/url"
+        note:
+          $ref: "#/components/schemas/note"
+        tags:
+          $ref: "#/components/schemas/tags"
+
     # HTTP status codes
     success:
       type: object
@@ -358,6 +347,12 @@ components:
         message:
           type: string
           example: "Success"
+    created:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Created"
     bad_request:
       type: object
       properties:
@@ -388,6 +383,18 @@ components:
         message:
           type: string
           example: "Conflict"
+    payload_too_large:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Payload too large"
+    unsupported_media_type:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unsupported Media Type"
     internal_server_error:
       type: object
       properties:

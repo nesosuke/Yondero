@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
 
-from . import postgres, style
+from . import postgres, style, fileio,req
 # HTTP status code は適当（デバッグ用）
 # 認証難しすぎワロタ
 # user = {
@@ -19,7 +19,6 @@ api = Flask(__name__)
 CORS(api)
 
 bp = Blueprint('api', __name__, url_prefix='/api/v1')
-
 
 base_dir = 'attatchments'
 limit_filesize = 50*1024*1024
@@ -37,13 +36,6 @@ def find_attatchments_dir(base_dir: str) -> str:
     if not os.path.exists(dirpath):
         os.mkdir(dirpath)
     return dirpath
-
-
-def read_filename(file: bytes) -> str:
-    '''
-    リクエストボディからファイル名を取得する
-    '''
-    return file.filename
 
 
 def validate_filesize(file: bytes, limit_filesize: int) -> bool:
@@ -64,51 +56,6 @@ def validate_filetype(file: bytes) -> bool:
     return True
 
 
-def read_user_id(json_data) -> int | None:
-    '''
-    リクエストボディからuser_idを取得する
-    '''
-    try:
-        user_id = json_data['user_id']
-    except KeyError:
-        abort(400)
-    return user_id
-
-
-def read_username_and_password(json_data) -> tuple | None:
-    '''
-    リクエストボディからusernameを取得する
-    '''
-    try:
-        username = json_data['username']
-        password = json_data['password']
-    except KeyError:
-        abort(400)
-    return username, password
-
-
-def read_file(data) -> bytes | None:
-    '''
-    リクエストボディからファイルを取得する
-    '''
-    try:
-        file = data.files['file']
-    except KeyError:
-        abort(400)
-    return file
-
-
-def read_metadata(json_data) -> dict | None:
-    '''
-    リクエストボディからmetadataを取得する
-    '''
-    try:
-        metadata = json_data['metadata']
-    except KeyError:
-        abort(400)
-    return metadata
-
-
 def validate_metadata(metadata: dict) -> bool:
     '''
     metadataを検証する
@@ -118,40 +65,6 @@ def validate_metadata(metadata: dict) -> bool:
     if 'title' not in metadata:
         return False
     return True
-
-
-def save_file(target_dir: str, file: bytes) -> str:
-    '''
-    FSにファイルを保存する
-    '''
-    filename = file.filename
-    filepath = target_dir+'/'+filename
-    with open(filepath, 'wb') as f:
-        f.write(file.read())
-    return filepath
-
-
-def load_file(filepath: str) -> bytes:
-    '''
-    FSからファイルを読み込む
-    '''
-    with open(filepath, 'rb') as f:
-        return f.read()
-
-
-def delete_file(filepath: str):
-    '''
-    FSからファイルを削除する
-    '''
-    os.remove(filepath)
-
-
-def update_file(filepath: str, file: bytes):
-    '''
-    FSにファイルを更新する
-    '''
-    delete_file(filepath)
-    save_file(filepath, file)
 
 
 @bp.route('/', methods=['GET'])
@@ -165,9 +78,7 @@ def get_documents():
     get all metadata
     '''
     data = postgres.get_all_metadata()
-    if data == 'something went wrong':
-        abort(500)
-    elif data is None:
+    if data is None:
         abort(404)
     return jsonify(data)
 
@@ -248,7 +159,7 @@ def get_document_metadata(document_id):
     '''
     get metadata of a document
     '''
-    data = postgres.get_metadata(document_id)
+    data = postgres.get_metadata(metadata_id)
     if data is None:
         abort(404)
 
@@ -257,13 +168,13 @@ def get_document_metadata(document_id):
 
 @bp.route('/documents/<int:document_id>/metadata', methods=['PUT'])
 def put_document_metadata(document_id):
-    if postgres.get_metadata(document_id) is None:
+    if postgres.get_metadata(metadata_id) is None:
         abort(404)
 
     body = request.get_json()
     metadata = read_metadata(body)
 
-    result_metadata = postgres.update_metadata(document_id, metadata)
+    result_metadata = postgres.update_metadata(metadata_id, metadata)
     if result_metadata is None:
         abort(500)
 
@@ -275,7 +186,7 @@ def get_file(document_id):
     '''
     get file of a document
     '''
-    data = postgres.get_filepath(document_id)
+    data = postgres.get_filepath(file_id)
     if data is None:
         abort(404)
 
@@ -287,7 +198,7 @@ def post_file(document_id):
     '''
     upload file of a document
     '''
-    if postgres.get_filepath(document_id) is not None:
+    if postgres.get_filepath(file_id) is not None:
         abort(409)
 
     body = request.get_json()
@@ -323,7 +234,7 @@ def put_file(document_id):
     '''
     update file of a document
     '''
-    result_file = postgres.get_filepath(document_id)
+    result_file = postgres.get_filepath(file_id)
     if result_file is None:
         abort(404)
 
@@ -340,7 +251,7 @@ def put_file(document_id):
     delete_file(filepath)
     filepath = save_file(target_dir, file)
 
-    result_file = postgres.update_file(document_id, filepath)
+    result_file = postgres.update_file(file_id, filepath)
     if result_file is None:
         abort(500)
 
@@ -352,15 +263,15 @@ def delete_file(document_id):
     '''
     delete file of a document
     '''
-    filepath = postgres.get_filepath(document_id)
+    filepath = postgres.get_filepath(file_id)
     if filepath is None:
         abort(404)
 
-    result_file = postgres.delete_file(document_id)
+    result_file = postgres.delete_file(file_id)
     if result_file is None:
         abort(500)
 
-    result_metadata = postgres.delete_metadata(document_id)
+    result_metadata = postgres.delete_metadata(file_id)
     if result_metadata is None:
         abort(500)
 

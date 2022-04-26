@@ -12,15 +12,15 @@ conn = psycopg2.connect(**db_config)
 
 
 def init_db():
-    # create db: documents, metadata, attachments
+    # create db: documents, metadata, files
     with conn.cursor() as cur:
         cur.execute('''
         CREATE TABLE IF NOT EXISTS documents (
             document_id SERIAL PRIMARY KEY,
-            metadata_id INTEGER NOT NULL,
+            metadata_id INTEGER,
             FOREIGN KEY (metadata_id) REFERENCES metadata(metadata_id),
-            attachment_id INTEGER NOT NULL,
-            FOREIGN KEY (attachment_id) REFERENCES attatchments(attachment_id),
+            file_id INTEGER,
+            FOREIGN KEY (file_id) REFERENCES files(file_id),
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
         ''')
@@ -41,9 +41,223 @@ def init_db():
             )   
         ''')
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS attatchments (
-            attachment_id SERIAL PRIMARY KEY,
+        CREATE TABLE IF NOT EXISTS files (
+            file_id SERIAL PRIMARY KEY,
             filepath TEXT,
             )
         ''')
         conn.commit()
+
+# handle documents table
+
+
+def add_document(file_id=None, metadata_id=None)->int:
+    '''
+    Create a new document record in Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        INSERT INTO documents (file_id, metadata_id)
+        VALUES (%s, %s)
+        RETURNING document_id
+        ''', (file_id, metadata_id))
+        document_id = cur.fetchone()[0]
+        conn.commit()
+    return document_id
+
+
+def get_metadata_id(document_id:int)->int:
+    '''
+    Get metadata_id of a document by document_id from Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT metadata_id FROM documents WHERE document_id = %s
+        RETURNING metadata_id
+        ''', (document_id,))
+        metadata_id = cur.fetchone()[0]
+        return metadata_id
+
+
+def get_file_id(document_id:int)->int:
+    '''
+    Get file_id of a document by document_id from Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT file_id FROM documents WHERE document_id = %s
+        RETURNING file_id
+        ''', (document_id,))
+        file_id = cur.fetchone()[0]
+        return file_id
+
+
+def update_file_id(document_id:int, file_id:int)->bool:
+    '''
+    Update file_id of a document by document_id in Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        UPDATE documents SET file_id = %s
+        WHERE document_id = %s
+        RETURNING file_id
+        ''', (file_id, document_id))
+        conn.commit()
+        file_id = cur.fetchone()[0]
+        if file_id is not None:
+            return True
+        else:
+            return False
+
+
+def update_metadata_id(document_id:int, metadata_id:int)->bool:
+    '''
+    Update metadata_id of a document by document_id in Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        UPDATE documents SET metadata_id = %s
+        WHERE document_id = %s
+        RETURNING metadata_id
+        ''', (metadata_id, document_id))
+        conn.commit()
+        metadata_id = cur.fetchone()[0]
+        if metadata_id is not None:
+            return True
+        else:
+            return False
+
+
+# handle metadata table
+
+
+def get_metadata(metadata_id:int)->dict:
+    '''
+    Get metadata of a document by document_id from Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT * FROM metadata WHERE metadata_id = %s
+        ''', (metadata_id,))
+        res = cur.fetchone()
+        if res is None:
+            return None
+        return res[1:]
+
+def get_all_metadata():
+    '''
+    Get all metadata records from Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT * FROM metadata
+        ''')
+        metadata = cur.fetchall()
+        return metadata
+
+
+def add_metadata(metadata:dict)->int:
+    '''
+    Create a new metadata record in Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        INSERT INTO metadata (document_type, title, authors, year, journal, volume, issue, pages, abstract, doi, url)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING metadata_id
+        ''', (metadata['document_type'], metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['abstract'], metadata['doi'], metadata['url']))
+        metadata_id = cur.fetchone()[0]
+        conn.commit()
+    return metadata_id
+
+
+def update_metadata(metadata_id, metadata):
+    '''
+    Update metadata record of a document by metadata_id in Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        UPDATE metadata SET document_type = %s, title = %s, authors = %s, year = %s, journal = %s, volume = %s, issue = %s, pages = %s, abstract = %s, doi = %s, url = %s
+        WHERE metadata_id = %s
+        ''', (metadata['document_type'], metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['abstract'], metadata['doi'], metadata['url'], metadata_id))
+        conn.commit()
+    return metadata_id
+
+
+def delete_metadata(metadata_id):
+    '''
+    Delete metadata record of a document by metadata_id in Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        DELETE FROM metadata WHERE metadata_id = %s
+        ''', (metadata_id,))
+        conn.commit()
+        cur.execute('''
+        SELECT * FROM metadata WHERE metadata_id = %s
+        ''', (metadata_id,))
+        metadata = cur.fetchone()
+        if metadata is None:
+            return True
+        else:
+            return False
+
+
+# handle files table
+def get_filepath(file_id):
+    '''
+    Get filepath of a file by file_id from Table: files
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT filepath FROM files WHERE file_id = %s
+        ''', (file_id,))
+        filepath = cur.fetchone()[0]
+    return filepath
+
+
+def add_file(filepath):
+    '''
+    Create a new file record in Table: files
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        INSERT INTO files (filepath)
+        VALUES (%s)
+        RETURNING file_id
+        ''', (filepath,))
+        file_id = cur.fetchone()[0]
+        conn.commit()
+    return file_id
+
+
+def update_file(file_id, filepath):
+    '''
+    Update file record of a document by file_id in Table: files
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        UPDATE files SET filepath = %s
+        WHERE file_id = %s
+        ''', (filepath, file_id))
+        conn.commit()
+    return file_id
+
+
+def delete_file(file_id):
+    '''
+    Delete file record of a document by file_id in Table: files
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        DELETE FROM files WHERE file_id = %s
+        ''', (file_id,))
+        conn.commit()
+        cur.execute('''
+        SELECT * FROM files WHERE file_id = %s
+        ''', (file_id,))
+        file = cur.fetchone()
+        if file is None:
+            return True
+        else:
+            return False

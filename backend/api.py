@@ -1,5 +1,6 @@
 from io import BytesIO
 from flask import Blueprint, Flask, abort, jsonify, request, send_file, url_for
+from requests import Response
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
@@ -21,23 +22,44 @@ bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
 
 base_dir = 'attatchments'
-max_filesize = 50*1024*1024
+limit_filesize = 50*1024*1024
+allowed_extensions = ['pdf', 'doc', 'docx', 'md', 'txt', 'ppt', 'pptx']
+document_type = ['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings',
+                 'manual', 'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
 
 
-def find_attatchments_dir(base_dir: str, user_id: int) -> str:
+def find_attatchments_dir(base_dir: str) -> str:
     # TODO: 分離 -> fileio.py
     '''
-    FS上の base_dir/{user_id} を探す．なければ作成する．
+    FS上の base_dir を探す．なければ作成する．
     '''
-    dirpath = base_dir+'/'+str(user_id)
+    dirpath = base_dir
     if not os.path.exists(dirpath):
         os.mkdir(dirpath)
     return dirpath
 
 
-def validate_filesize(file: bytes, max_filesize: int) -> bool:
+def read_filename(file: bytes) -> str:
+    '''
+    リクエストボディからファイル名を取得する
+    '''
+    return file.filename
+
+
+def validate_filesize(file: bytes, limit_filesize: int) -> bool:
     # TODO: 分離 -> fileio.py
-    if file.__sizeof__() > max_filesize:
+    if file.__sizeof__() > limit_filesize:
+        return False
+    return True
+
+
+def validate_filetype(file: bytes) -> bool:
+    '''
+    ファイルタイプを検証する
+    '''
+    filename = read_filename(file)
+    ext = filename.rsplit('.', 1)[1]
+    if ext not in allowed_extensions:
         return False
     return True
 
@@ -65,17 +87,6 @@ def read_username_and_password(json_data) -> tuple | None:
     return username, password
 
 
-def read_item_id(json_data) -> int | None:
-    '''
-    リクエストボディからitem_idを取得する
-    '''
-    try:
-        item_id = json_data['item_id']
-    except KeyError:
-        abort(400)
-    return item_id
-
-
 def read_file(data) -> bytes | None:
     '''
     リクエストボディからファイルを取得する
@@ -98,7 +109,18 @@ def read_metadata(json_data) -> dict | None:
     return metadata
 
 
-def save_file(target_dir: str, file: bytes, item_id: int) -> None:
+def validate_metadata(metadata: dict) -> bool:
+    '''
+    metadataを検証する
+    '''
+    if 'document_type' not in metadata:
+        return False
+    if 'title' not in metadata:
+        return False
+    return True
+
+
+def save_file(target_dir: str, file: bytes) -> str:
     '''
     FSにファイルを保存する
     '''
@@ -106,6 +128,7 @@ def save_file(target_dir: str, file: bytes, item_id: int) -> None:
     filepath = target_dir+'/'+filename
     with open(filepath, 'wb') as f:
         f.write(file.read())
+    return filepath
 
 
 def load_file(filepath: str) -> bytes:
@@ -116,130 +139,230 @@ def load_file(filepath: str) -> bytes:
         return f.read()
 
 
-@bp.route('/register', methods=['POST'])
-def resister():
+def delete_file(filepath: str):
     '''
-    register an user
+    FSからファイルを削除する
     '''
-    json_data = request.get_json()
-    username, password = read_username_and_password(json_data)
+    os.remove(filepath)
 
-    res = postgres.add_user(username, password)
-    if res == 'something went wrong':
+
+def update_file(filepath: str, file: bytes):
+    '''
+    FSにファイルを更新する
+    '''
+    delete_file(filepath)
+    save_file(filepath, file)
+
+
+@bp.route('/', methods=['GET'])
+def index():
+    return 'hello world'
+
+
+@bp.route('/documents', methods=['GET'])
+def get_documents():
+    '''
+    get all metadata
+    '''
+    data = postgres.get_all_metadata()
+    if data == 'something went wrong':
         abort(500)
-    user_id = res
-    return jsonify({'user_id': user_id})
+    elif data is None:
+        abort(404)
+    return jsonify(data)
 
 
-@bp.route('/item/cite', methods=['POST'])
-def item_cite():
+@bp.route('/documents', methods=['POST'])
+def post_document():
     '''
-    Return citation for item, BibTeX format
-    #TODO style.pyでいい感じにできるまで保留
+    add a new document file or/and a new metadata
     '''
-    return None
+    body = request.get_json()
 
-
-@bp.route('/item/new', methods=['POST'])
-def item_new():
-    '''
-    Add new item to database
-    '''
-    json_data = request.get_json()
-    user_id = read_user_id(json_data)
-    metadata = read_metadata(json_data)
-    res = postgres.add_metadata(user_id, metadata)
-    if res == 'not found':
+    if 'file' not in body and 'metadata' not in body:
         abort(400)
-    item_id = res
-    return jsonify({'item_id': item_id})
+
+    elif 'file' not in body:  # metadata only
+        metadata = read_metadata(body)
+        if not validate_metadata(metadata):
+            abort(400)
+
+        result_metadata = postgres.add_metadata(metadata)
+        if result_metadata == 'conflict':
+            abort(409)
+
+        return Response(status=201)
+
+    elif 'metadata' not in body:  # file only
+        file = read_file(body)
+        if not validate_filesize(file, limit_filesize):
+            abort(413)
+        if not validate_filetype(file):
+            abort(415)
+
+        filename = read_filename(file)
+        target_dir = find_attatchments_dir(base_dir)
+        filepath = save_file(target_dir, file)
+        if os.path.exists(filepath):
+            abort(409)
+        result_file = postgres.add_file(filepath)
+        if result_file == 'conflict':
+            abort(409)
+
+        metadata = {
+            'document_type': 'misc',
+            'title': filename
+        }
+        result_metadata = postgres.add_metadata(metadata)
+        if result_metadata == 'conflict':
+            abort(409)
+
+        return Response(status=201)
+
+    else:  # both file and metadata
+        file = read_file(body)
+        metadata = read_metadata(body)
+
+        if not validate_metadata(metadata):
+            abort(400)
+        if not validate_filesize(file, limit_filesize):
+            abort(413)
+        if not validate_filetype(file):
+            abort(415)
+
+        target_dir = find_attatchments_dir(base_dir)
+        filepath = save_file(target_dir, file)
+        if os.path.exists(filepath):
+            abort(409)
+
+        result_file = postgres.add_file(filepath)
+        result_metadata = postgres.add_metadata(metadata)
+        if result_file == 'conflict' or result_metadata == 'conflict':
+            abort(409)
+
+        return Response(status=201)
 
 
-@bp.route('/item/update', methods=['POST'])
-def item_update():
+@bp.route('/documents/<int:document_id>/metadata', methods=['GET'])
+def get_document_metadata(document_id):
     '''
-    Update item in database 
+    get metadata of a document
     '''
-    json_data = request.get_json()
-    user_id = read_user_id(json_data)
-    item_id = read_item_id(json_data)
-    metadata = read_metadata(json_data)
-    res = postgres.update_metadata(user_id, item_id, metadata)
-    if res == 'not found':
-        abort(400)
-    return jsonify({'item_id': item_id})
+    data = postgres.get_metadata(document_id)
+    if data is None:
+        abort(404)
+
+    return jsonify(data)
 
 
-@bp.route('/item/upload', methods=['POST'])
-def item_upload():
+@bp.route('/documents/<int:document_id>/metadata', methods=['PUT'])
+def put_document_metadata(document_id):
+    if postgres.get_metadata(document_id) is None:
+        abort(404)
+
+    body = request.get_json()
+    metadata = read_metadata(body)
+
+    result_metadata = postgres.update_metadata(document_id, metadata)
+    if result_metadata is None:
+        abort(500)
+
+    return Response(status=200)
+
+
+@bp.route('/documents/<int:document_id>', methods=['GET'])
+def get_file(document_id):
     '''
-    Upload file and metadata to server
-    #TODO ファイルの取り扱いできてない -> 400になる
+    get file of a document
     '''
-    # data = request.get_data()
-    req=request
-    file = read_file(req)
-    if not validate_filesize(file, max_filesize):
+    data = postgres.get_filepath(document_id)
+    if data is None:
+        abort(404)
+
+    return send_file(data, as_attachment=True)
+
+
+@bp.route('/documents/<int:document_id>', methods=['POST'])
+def post_file(document_id):
+    '''
+    upload file of a document
+    '''
+    if postgres.get_filepath(document_id) is not None:
+        abort(409)
+
+    body = request.get_json()
+    file = read_file(body)
+    if not validate_filesize(file, limit_filesize):
         abort(413)
-    filename = secure_filename(file.filename)
+    if not validate_filetype(file):
+        abort(415)
 
-    json_data = req.get_json()
-    user_id = read_user_id(json_data)
-    item_id = read_item_id(json_data)
+    filename = read_filename(file)
+    target_dir = find_attatchments_dir(base_dir)
+    filepath = save_file(target_dir, file)
+    if os.path.exists(filepath):
+        abort(409)
 
-    target_dir = find_attatchments_dir(base_dir, user_id)
-    filepath = target_dir+'/'+filename
-
-    save_file(target_dir, file, item_id)
-
-    res = postgres.add_file(user_id, item_id, filepath)
-    if res == 'something went wrong':
+    result_file = postgres.add_file(filepath)
+    if result_file is None:
         abort(500)
-    file_id = res
 
-    res = postgres.find_item_id(file_id)
-    if res == 'not found':
+    metadata = {
+        'document_type': 'misc',
+        'title': filename
+    }
+    result_metadata = postgres.add_metadata(metadata)
+    if result_metadata is None:
         abort(500)
-    item_id = res
 
-    return jsonify({'item_id': item_id})
+    return Response(status=201)
 
 
-@bp.route('/item/download', methods=['POST'])
-def item_download():
+@bp.route('/documents/<int:document_id>', methods=['PUT'])
+def put_file(document_id):
     '''
-    Return file from server
+    update file of a document
     '''
-    json_data = request.get_json()
-    user_id = read_user_id(json_data)
-    item_id = read_item_id(json_data)
-
-    res = postgres.find_file_id(user_id, item_id)
-    if res == 'not found':
+    result_file = postgres.get_filepath(document_id)
+    if result_file is None:
         abort(404)
-    file_id = res
 
-    res = postgres.find_file_path(file_id)
-    if res == 'not found':
+    body = request.get_json()
+    file = read_file(body)
+    if not validate_filesize(file, limit_filesize):
+        abort(413)
+    if not validate_filetype(file):
+        abort(415)
+
+    target_dir = find_attatchments_dir(base_dir)
+    filepath = save_file(target_dir, file)
+
+    delete_file(filepath)
+    filepath = save_file(target_dir, file)
+
+    result_file = postgres.update_file(document_id, filepath)
+    if result_file is None:
         abort(500)
-    filepath = res
-    filename = os.path.basename(filepath)
 
-    file = load_file(filepath)
-    return send_file(BytesIO(file), attachment_filename=filename, as_attachment=True)
+    return Response(status=200)
 
 
-@bp.route('/item/all', methods=['POST'])
-def item_all():
+@bp.route('/documents/<int:document_id>', methods=['DELETE'])
+def delete_file(document_id):
     '''
-    Return all items in database
+    delete file of a document
     '''
-    json_data = request.get_json()
-    user_id = read_user_id(json_data)
-
-    res = postgres.find_all_metadata(user_id)
-    if res == 'not found':
+    filepath = postgres.get_filepath(document_id)
+    if filepath is None:
         abort(404)
-    metadata_list = res
 
-    return jsonify(metadata_list)
+    result_file = postgres.delete_file(document_id)
+    if result_file is None:
+        abort(500)
+
+    result_metadata = postgres.delete_metadata(document_id)
+    if result_metadata is None:
+        abort(500)
+
+    delete_file(filepath)
+    return Response(status=200)

@@ -1,11 +1,9 @@
-from io import BytesIO
-from flask import Blueprint, Flask, abort, jsonify, request, send_file, url_for
+from flask import Blueprint, Flask, abort, jsonify, request, send_file
 from requests import Response
-from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
 
-from . import postgres, style, fileio, req
+from . import postgres, reqparser, style, fileio
 # HTTP status code は適当（デバッグ用）
 # 認証難しすぎワロタ
 # user = {
@@ -20,15 +18,14 @@ CORS(api)
 
 bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
-base_dir = 'attatchments'
+base_dir = 'attachments'
 limit_filesize = 50*1024*1024
 allowed_extensions = ['pdf', 'doc', 'docx', 'md', 'txt', 'ppt', 'pptx']
 document_type = ['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings',
                  'manual', 'mastersthesis', 'misc', 'phdthesis', 'proceedings', 'techreport', 'unpublished']
 
 
-def find_attatchments_dir(base_dir: str) -> str:
-    # TODO: 分離 -> fileio.py
+def find_attachments_dir(base_dir: str) -> str:
     '''
     FS上の base_dir を探す．なければ作成する．
     '''
@@ -38,28 +35,12 @@ def find_attatchments_dir(base_dir: str) -> str:
     return dirpath
 
 
-def validate_filesize(file: bytes, limit_filesize: int) -> bool:
-    # TODO: 分離 -> fileio.py
-    if file.__sizeof__() > limit_filesize:
-        return False
-    return True
-
-
-def validate_filetype(file: bytes) -> bool:
-    '''
-    ファイルタイプを検証する
-    '''
-    filename = req.read_filename(file)
-    ext = filename.rsplit('.', 1)[1]
-    if ext not in allowed_extensions:
-        return False
-    return True
-
-
 def validate_metadata(metadata: dict) -> bool:
     '''
     metadataを検証する
     '''
+    if metadata is None:
+        return False
     if 'title' not in metadata:
         return False
     return True
@@ -86,73 +67,25 @@ def post_document():
     '''
     add a new document file or/and a new metadata
     '''
+    # body is metadata
+    # metadata: JSON
     body = request.get_json()
-
-    if 'file' not in body and 'metadata' not in body:
+    metadata = body
+    if not validate_metadata(metadata):
         abort(400)
 
-    elif 'file' not in body:  # metadata only
-        metadata = req.read_metadata(body)
-        if not validate_metadata(metadata):
-            abort(400)
+    metadata_id = postgres.add_metadata(metadata)
+    if metadata_id is None:
+        abort(500)
 
-        result_metadata = postgres.add_metadata(metadata)
-        if result_metadata == 'conflict':
-            abort(409)
+    document_id = postgres.add_document(metadata_id)
+    if document_id is None:
+        abort(500)
 
-        return Response(status=201)
-
-    elif 'metadata' not in body:  # file only
-        file = req.read_file(body)
-        if not validate_filesize(file, limit_filesize):
-            abort(413)
-        if not validate_filetype(file):
-            abort(415)
-
-        filename = req.read_filename(file)
-        target_dir = find_attatchments_dir(base_dir)
-        filepath = fileio.save_file(target_dir, file)
-        if os.path.exists(filepath):
-            abort(409)
-        result_file = postgres.add_file(filepath)
-        if result_file == 'conflict':
-            abort(409)
-
-        metadata = {
-            'document_type': 'misc',
-            'title': filename
-        }
-        result_metadata = postgres.add_metadata(metadata)
-        if result_metadata == 'conflict':
-            abort(409)
-
-        return Response(status=201)
-
-    else:  # both file and metadata
-        file = req.read_file(body)
-        metadata = req.read_metadata(body)
-
-        if not validate_metadata(metadata):
-            abort(400)
-        if not validate_filesize(file, limit_filesize):
-            abort(413)
-        if not validate_filetype(file):
-            abort(415)
-
-        target_dir = find_attatchments_dir(base_dir)
-        filepath = fileio.save_file(target_dir, file)
-        if os.path.exists(filepath):
-            abort(409)
-
-        result_file = postgres.add_file(filepath)
-        result_metadata = postgres.add_metadata(metadata)
-        if result_file == 'conflict' or result_metadata == 'conflict':
-            abort(409)
-
-        return Response(status=201)
+    return jsonify({'document_id': document_id}), 201
 
 
-@bp.route('/documents/<int:document_id>/metadata', methods=['GET'])
+@bp.route('/documents/<int:document_id>', methods=['GET'])
 def get_document_metadata(document_id):
     '''
     get metadata of a document
@@ -165,23 +98,47 @@ def get_document_metadata(document_id):
     return jsonify(data)
 
 
-@bp.route('/documents/<int:document_id>/metadata', methods=['PUT'])
+@bp.route('/documents/<int:document_id>', methods=['PUT'])
 def put_document_metadata(document_id):
     metadata_id = postgres.get_metadata_id(document_id)
     if postgres.get_metadata(metadata_id) is None:
         abort(404)
 
     body = request.get_json()
-    metadata = req.read_metadata(body)
+    metadata = body
 
-    result_metadata = postgres.update_metadata(metadata_id, metadata)
-    if result_metadata is None:
+    metadata_id = postgres.update_metadata(metadata_id, metadata)
+    if metadata_id is None:
         abort(500)
 
-    return Response(status=200)
+    return jsonify({'metadata_id': metadata_id})
 
 
-@bp.route('/documents/<int:document_id>', methods=['GET'])
+@bp.route('/documents/<int:document_id>', methods=['DELETE'])
+def delete_document(document_id):
+    ''' 
+    delete a document, and related metadata and file
+    '''
+    metadata_id = postgres.get_metadata_id(document_id)
+    if postgres.get_metadata(metadata_id) is None:
+        abort(404)
+
+    postgres.delete_document(document_id)
+    
+    postgres.delete_metadata(metadata_id)
+
+    file_id = postgres.get_file_id(document_id)
+    if file_id is not None:
+        filepath = postgres.get_filepath(file_id)
+        fileio.delete_file(filepath)
+        postgres.delete_file(file_id)
+
+    
+
+    return '', 200
+
+
+@bp.route('/documents/<int:document_id>/file', methods=['GET'])
 def get_document_file(document_id):
     '''
     get file of a document
@@ -194,7 +151,7 @@ def get_document_file(document_id):
     return send_file(data, as_attachment=True)
 
 
-@bp.route('/documents/<int:document_id>', methods=['POST'])
+@bp.route('/documents/<int:document_id>/file', methods=['POST'])
 def post_document_file(document_id):
     '''
     upload file of a document
@@ -204,34 +161,32 @@ def post_document_file(document_id):
         abort(409)
 
     body = request.get_json()
-    file = fileio.read_file(body)
-    if not validate_filesize(file, limit_filesize):
+    file = reqparser.read_file(body)
+    if not fileio.validate_filesize(file, limit_filesize):
         abort(413)
-    if not validate_filetype(file):
+    if not fileio.validate_filetype(file, allowed_extensions):
         abort(415)
 
-    filename = req.read_filename(file)
-    target_dir = find_attatchments_dir(base_dir)
-    filepath = fileio.save_file(target_dir, file)
+    # TODO: ユーザー機能を追加の予約用．find_attachments_dir(base_dir, user_id)とする．
+    target_dir = find_attachments_dir(base_dir)
+    filename = reqparser.read_filename(file)
+    filepath = os.path.join(target_dir, filename)
+
     if os.path.exists(filepath):
         abort(409)
+    filepath = fileio.save_file(filepath, file)
 
-    result_file = postgres.add_file(filepath)
-    if result_file is None:
+    file_id = postgres.add_file(filepath)
+    if file_id is None:
         abort(500)
 
-    metadata = {
-        'document_type': 'misc',
-        'title': filename
-    }
-    result_metadata = postgres.add_metadata(metadata)
-    if result_metadata is None:
+    if postgres.update_file_id(document_id, file_id):
         abort(500)
 
-    return Response(status=201)
+    return '', 201
 
 
-@bp.route('/documents/<int:document_id>', methods=['PUT'])
+@bp.route('/documents/<int:document_id>/file', methods=['PUT'])
 def put_document_file(document_id):
     '''
     update file of a document
@@ -242,17 +197,19 @@ def put_document_file(document_id):
         abort(404)
 
     body = request.get_json()
-    file = fileio.read_file(body)
-    if not validate_filesize(file, limit_filesize):
+    file = reqparser.read_file(body)
+    if not fileio.validate_filesize(file, limit_filesize):
         abort(413)
-    if not validate_filetype(file):
+    if not fileio.validate_filetype(file, allowed_extensions):
         abort(415)
 
-    target_dir = find_attatchments_dir(base_dir)
-    filepath = fileio.save_file(target_dir, file)
+    # TODO: ユーザー機能を追加の予約用．find_attachments_dir(base_dir, user_id)とする．
+    target_dir = find_attachments_dir(base_dir)
+    filename = reqparser.read_filename(file)
+    filepath = os.path.join(target_dir, filename)
 
     fileio.delete_file(filepath)
-    filepath = fileio.save_file(target_dir, file)
+    filepath = fileio.save_file(filepath, file)
 
     result_file = postgres.update_file(file_id, filepath)
     if result_file is None:
@@ -261,8 +218,8 @@ def put_document_file(document_id):
     return Response(status=200)
 
 
-@bp.route('/documents/<int:document_id>', methods=['DELETE'])
-def delete_document(document_id):
+@bp.route('/documents/<int:document_id>/file', methods=['DELETE'])
+def delete_document_file(document_id):
     '''
     delete file of a document
     '''
@@ -272,14 +229,8 @@ def delete_document(document_id):
         abort(404)
     fileio.delete_file(filepath)
 
-    # result_file = postgres.delete_file(file_id)
-    # if result_file is None:
-    #     abort(500)
-
-    # result_metadata = postgres.delete_metadata(file_id)
-    # if result_metadata is None:
-    #     abort(500)
-
-    if postgres.delete_document(document_id) is False:
+    result_file = postgres.delete_file(file_id)
+    if result_file is False:
         abort(500)
+
     return Response(status=200)

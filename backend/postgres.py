@@ -38,29 +38,48 @@ def init_db():
         cur.execute('''
         CREATE TABLE IF NOT EXISTS documents (
             document_id SERIAL PRIMARY KEY,
-            metadata_id INTEGER,
-            FOREIGN KEY (metadata_id) REFERENCES metadata(metadata_id),
-            file_id INTEGER,
-            FOREIGN KEY (file_id) REFERENCES files(file_id),
+            metadata_id INTEGER REFERENCES metadata(metadata_id),
+            file_id INTEGER REFERENCES files(file_id),
             created_at TIMESTAMP NOT NULL DEFAULT NOW()
             )
         ''')
 
         conn.commit()
 
+
+def metadata_to_dict(metadata: list) -> dict:
+    '''
+    Convert metadata list to dictionary
+    '''
+    metadata_dict = {
+        'metadata_id': metadata[0],
+        'document_type': metadata[1],
+        'title': metadata[2],
+        'authors': metadata[3],
+        'year': metadata[4],
+        'journal': metadata[5],
+        'volume': metadata[6],
+        'issue': metadata[7],
+        'pages': metadata[8],
+        'abstract': metadata[9],
+        'doi': metadata[10],
+        'url': metadata[11]
+    }
+    del metadata_dict['metadata_id']
+    return metadata_dict
+
 # handle documents table
 
 
-def add_document(file_id=None, metadata_id=None) -> int:
+def add_document(metadata_id: int) -> int:
     '''
     Create a new document record in Table: documents
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        INSERT INTO documents (file_id, metadata_id)
-        VALUES (%s, %s)
+        INSERT INTO documents (metadata_id) VALUES (%s)
         RETURNING document_id
-        ''', (file_id, metadata_id))
+        ''', (metadata_id,))
         document_id = cur.fetchone()[0]
         conn.commit()
     return document_id
@@ -74,9 +93,10 @@ def get_metadata_id(document_id: int) -> int:
         cur.execute('''
         SELECT metadata_id FROM documents WHERE document_id = %s
         ''', (document_id,))
-        if cur.fetchone() is None:
+        data = cur.fetchone()
+        if data is None:
             return None
-        metadata_id = cur.fetchone()[0]
+        metadata_id = data[0]
         return metadata_id
 
 
@@ -88,9 +108,10 @@ def get_file_id(document_id: int) -> int:
         cur.execute('''
         SELECT file_id FROM documents WHERE document_id = %s
         ''', (document_id,))
-        if cur.fetchone() is None:
+        data = cur.fetchone()
+        if data is None:
             return None
-        file_id = cur.fetchone()[0]
+        file_id = data[0]
         return file_id
 
 
@@ -144,7 +165,8 @@ def get_metadata(metadata_id: int) -> dict:
         res = cur.fetchone()
         if res is None:
             return None
-        return res[1:]
+        metadata = metadata_to_dict(res)
+        return metadata
 
 
 def get_all_metadata():
@@ -155,8 +177,10 @@ def get_all_metadata():
         cur.execute('''
         SELECT * FROM metadata
         ''')
-        metadata = cur.fetchall()
-        return metadata
+        data = cur.fetchall()
+        metadata_list = [metadata_to_dict(datum) for datum in data]
+        # TODO　FIXME: metadataに document_id を追加する
+        return metadata_list
 
 
 def add_metadata(metadata: dict) -> int:
@@ -221,7 +245,7 @@ def get_filepath(file_id):
     return filepath
 
 
-def add_file(filepath):
+def add_file(filepath: str) -> int:
     '''
     Create a new file record in Table: files
     '''

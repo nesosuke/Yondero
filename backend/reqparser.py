@@ -1,4 +1,6 @@
+from cgi import FieldStorage
 from flask import abort
+from werkzeug.utils import secure_filename
 
 
 def read_user_id(json_data) -> int | None:
@@ -37,9 +39,9 @@ def read_file(data) -> bytes | None:
 
 def read_filename(file: bytes) -> str:
     '''
-    リクエストボディからファイル名を取得する
+    リクエストボディのファイルからファイル名を取得する
     '''
-    return file.filename
+    return secure_filename(file.filename)
 
 
 def read_metadata(json_data) -> dict | None:
@@ -51,3 +53,24 @@ def read_metadata(json_data) -> dict | None:
     except KeyError:
         abort(400)
     return metadata
+
+
+def parse_multipart_formdata(request):
+    '''
+    リクエストボディからファイルとmetadataを取得する
+    '''
+    env = {'REQUEST_METHOD': 'POST'}
+    form = FieldStorage(
+        environ=env,
+        keep_blank_values=True
+    )
+    try:
+        file = form['file']
+    except KeyError:
+        file = None
+
+    try:
+        metadata = form['metadata']
+    except KeyError:
+        metadata = None
+    return file, metadata

@@ -1,5 +1,4 @@
 import psycopg2
-from typing_extensions import Literal
 
 db_config = {
     'host': 'db',
@@ -15,19 +14,9 @@ def init_db():
     # create db: documents, metadata, files
     with conn.cursor() as cur:
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS documents (
-            document_id SERIAL PRIMARY KEY,
-            metadata_id INTEGER,
-            FOREIGN KEY (metadata_id) REFERENCES metadata(metadata_id),
-            file_id INTEGER,
-            FOREIGN KEY (file_id) REFERENCES files(file_id),
-            created_at TIMESTAMP NOT NULL DEFAULT NOW()
-            )
-        ''')
-        cur.execute('''
         CREATE TABLE IF NOT EXISTS metadata (
             metadata_id SERIAL PRIMARY KEY,
-            document_type TEXT NOT NULL,
+            document_type TEXT,
             title TEXT NOT NULL,
             authors TEXT[],
             year INTEGER,
@@ -43,15 +32,26 @@ def init_db():
         cur.execute('''
         CREATE TABLE IF NOT EXISTS files (
             file_id SERIAL PRIMARY KEY,
-            filepath TEXT,
+            filepath TEXT
             )
         ''')
+        cur.execute('''
+        CREATE TABLE IF NOT EXISTS documents (
+            document_id SERIAL PRIMARY KEY,
+            metadata_id INTEGER,
+            FOREIGN KEY (metadata_id) REFERENCES metadata(metadata_id),
+            file_id INTEGER,
+            FOREIGN KEY (file_id) REFERENCES files(file_id),
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
+        ''')
+
         conn.commit()
 
 # handle documents table
 
 
-def add_document(file_id=None, metadata_id=None)->int:
+def add_document(file_id=None, metadata_id=None) -> int:
     '''
     Create a new document record in Table: documents
     '''
@@ -66,33 +66,35 @@ def add_document(file_id=None, metadata_id=None)->int:
     return document_id
 
 
-def get_metadata_id(document_id:int)->int:
+def get_metadata_id(document_id: int) -> int:
     '''
     Get metadata_id of a document by document_id from Table: documents
     '''
     with conn.cursor() as cur:
         cur.execute('''
         SELECT metadata_id FROM documents WHERE document_id = %s
-        RETURNING metadata_id
         ''', (document_id,))
+        if cur.fetchone() is None:
+            return None
         metadata_id = cur.fetchone()[0]
         return metadata_id
 
 
-def get_file_id(document_id:int)->int:
+def get_file_id(document_id: int) -> int:
     '''
     Get file_id of a document by document_id from Table: documents
     '''
     with conn.cursor() as cur:
         cur.execute('''
         SELECT file_id FROM documents WHERE document_id = %s
-        RETURNING file_id
         ''', (document_id,))
+        if cur.fetchone() is None:
+            return None
         file_id = cur.fetchone()[0]
         return file_id
 
 
-def update_file_id(document_id:int, file_id:int)->bool:
+def update_file_id(document_id: int, file_id: int) -> bool:
     '''
     Update file_id of a document by document_id in Table: documents
     '''
@@ -110,7 +112,7 @@ def update_file_id(document_id:int, file_id:int)->bool:
             return False
 
 
-def update_metadata_id(document_id:int, metadata_id:int)->bool:
+def update_metadata_id(document_id: int, metadata_id: int) -> bool:
     '''
     Update metadata_id of a document by document_id in Table: documents
     '''
@@ -131,7 +133,7 @@ def update_metadata_id(document_id:int, metadata_id:int)->bool:
 # handle metadata table
 
 
-def get_metadata(metadata_id:int)->dict:
+def get_metadata(metadata_id: int) -> dict:
     '''
     Get metadata of a document by document_id from Table: metadata
     '''
@@ -143,6 +145,7 @@ def get_metadata(metadata_id:int)->dict:
         if res is None:
             return None
         return res[1:]
+
 
 def get_all_metadata():
     '''
@@ -156,7 +159,7 @@ def get_all_metadata():
         return metadata
 
 
-def add_metadata(metadata:dict)->int:
+def add_metadata(metadata: dict) -> int:
     '''
     Create a new metadata record in Table: metadata
     '''
@@ -212,6 +215,8 @@ def get_filepath(file_id):
         cur.execute('''
         SELECT filepath FROM files WHERE file_id = %s
         ''', (file_id,))
+        if cur.fetchone() is None:
+            return None
         filepath = cur.fetchone()[0]
     return filepath
 
@@ -258,6 +263,26 @@ def delete_file(file_id):
         ''', (file_id,))
         file = cur.fetchone()
         if file is None:
+            return True
+        else:
+            return False
+
+
+# delete
+def delete_document(document_id):
+    '''
+    Delete document record of a document by document_id in Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        DELETE FROM documents WHERE document_id = %s
+        ''', (document_id,))
+        conn.commit()
+        cur.execute('''
+        SELECT * FROM documents WHERE document_id = %s
+        ''', (document_id,))
+        document = cur.fetchone()
+        if document is None:
             return True
         else:
             return False

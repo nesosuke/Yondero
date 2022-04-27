@@ -2,6 +2,7 @@ from bibtexparser.bparser import BibTexParser
 from bibtexparser.bwriter import BibTexWriter
 import bibtexparser
 
+#TODO:dict -> BibteXに変換するやつつくる
 
 def bibtex_load(bibtex_str:str):
     parser = BibTexParser()

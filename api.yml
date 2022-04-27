@@ -32,7 +32,7 @@ paths:
         - Handle Document or/and Metadata
       description: Upload a new document or/and Create a new metadata.
       requestBody:
-        $ref: "#/components/requestBodies/document+metadata"
+        $ref: "#/components/requestBodies/file+metadata"
       responses:
         201:
           $ref: "#/components/responses/created"
@@ -68,7 +68,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/document_id"
       requestBody:
-        $ref: "#/components/requestBodies/document"
+        $ref: "#/components/requestBodies/file"
       responses:
         201:
           $ref: "#/components/responses/created"
@@ -89,7 +89,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/document_id"
       requestBody:
-        $ref: "#/components/requestBodies/document"
+        $ref: "#/components/requestBodies/file"
       responses:
         200:
           $ref: "#/components/responses/success"
@@ -172,23 +172,23 @@ components:
       schema:
         $ref: "#/components/schemas/document_id"
   requestBodies:
-    document:
+    file:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/document"
+            $ref: "#/components/schemas/file"
     metadata:
       description: Article metadata
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/metadata"
-    document+metadata:
+    file+metadata:
       description: Document metadata and file
       content:
         multipart/form-data:
           schema:
-            $ref: "#/components/schemas/document+metadata"
+            $ref: "#/components/schemas/file+metadata"
 
   responses:
     success:
@@ -306,16 +306,12 @@ components:
       type: string
       format: binary
 
-    document:
-      type: string
-      format: binary
-
     metadata:
       type: object
       properties:
         doi:
           $ref: "#/components/schemas/doi"
-        article_type:
+        document_type:
           $ref: "#/components/schemas/document_type"
         title:
           $ref: "#/components/schemas/title"
@@ -342,11 +338,11 @@ components:
         tags:
           $ref: "#/components/schemas/tags"
 
-    document+metadata:
+    file+metadata:
       type: object
       properties:
-        document:
-          $ref: "#/components/schemas/document"
+        file:
+          $ref: "#/components/schemas/file"
         metadata:
           $ref: "#/components/schemas/metadata"
     # HTTP status codes

@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import os
 
-from . import postgres, style, fileio,req
+from . import postgres, style, fileio, req
 # HTTP status code は適当（デバッグ用）
 # 認証難しすぎワロタ
 # user = {
@@ -49,7 +49,7 @@ def validate_filetype(file: bytes) -> bool:
     '''
     ファイルタイプを検証する
     '''
-    filename = read_filename(file)
+    filename = req.read_filename(file)
     ext = filename.rsplit('.', 1)[1]
     if ext not in allowed_extensions:
         return False
@@ -60,8 +60,6 @@ def validate_metadata(metadata: dict) -> bool:
     '''
     metadataを検証する
     '''
-    if 'document_type' not in metadata:
-        return False
     if 'title' not in metadata:
         return False
     return True
@@ -94,7 +92,7 @@ def post_document():
         abort(400)
 
     elif 'file' not in body:  # metadata only
-        metadata = read_metadata(body)
+        metadata = req.read_metadata(body)
         if not validate_metadata(metadata):
             abort(400)
 
@@ -105,15 +103,15 @@ def post_document():
         return Response(status=201)
 
     elif 'metadata' not in body:  # file only
-        file = read_file(body)
+        file = req.read_file(body)
         if not validate_filesize(file, limit_filesize):
             abort(413)
         if not validate_filetype(file):
             abort(415)
 
-        filename = read_filename(file)
+        filename = req.read_filename(file)
         target_dir = find_attatchments_dir(base_dir)
-        filepath = save_file(target_dir, file)
+        filepath = fileio.save_file(target_dir, file)
         if os.path.exists(filepath):
             abort(409)
         result_file = postgres.add_file(filepath)
@@ -131,8 +129,8 @@ def post_document():
         return Response(status=201)
 
     else:  # both file and metadata
-        file = read_file(body)
-        metadata = read_metadata(body)
+        file = req.read_file(body)
+        metadata = req.read_metadata(body)
 
         if not validate_metadata(metadata):
             abort(400)
@@ -142,7 +140,7 @@ def post_document():
             abort(415)
 
         target_dir = find_attatchments_dir(base_dir)
-        filepath = save_file(target_dir, file)
+        filepath = fileio.save_file(target_dir, file)
         if os.path.exists(filepath):
             abort(409)
 
@@ -159,6 +157,7 @@ def get_document_metadata(document_id):
     '''
     get metadata of a document
     '''
+    metadata_id = postgres.get_metadata_id(document_id)
     data = postgres.get_metadata(metadata_id)
     if data is None:
         abort(404)
@@ -168,11 +167,12 @@ def get_document_metadata(document_id):
 
 @bp.route('/documents/<int:document_id>/metadata', methods=['PUT'])
 def put_document_metadata(document_id):
+    metadata_id = postgres.get_metadata_id(document_id)
     if postgres.get_metadata(metadata_id) is None:
         abort(404)
 
     body = request.get_json()
-    metadata = read_metadata(body)
+    metadata = req.read_metadata(body)
 
     result_metadata = postgres.update_metadata(metadata_id, metadata)
     if result_metadata is None:
@@ -182,10 +182,11 @@ def put_document_metadata(document_id):
 
 
 @bp.route('/documents/<int:document_id>', methods=['GET'])
-def get_file(document_id):
+def get_document_file(document_id):
     '''
     get file of a document
     '''
+    file_id = postgres.get_file_id(document_id)
     data = postgres.get_filepath(file_id)
     if data is None:
         abort(404)
@@ -194,23 +195,24 @@ def get_file(document_id):
 
 
 @bp.route('/documents/<int:document_id>', methods=['POST'])
-def post_file(document_id):
+def post_document_file(document_id):
     '''
     upload file of a document
     '''
+    file_id = postgres.get_file_id(document_id)
     if postgres.get_filepath(file_id) is not None:
         abort(409)
 
     body = request.get_json()
-    file = read_file(body)
+    file = fileio.read_file(body)
     if not validate_filesize(file, limit_filesize):
         abort(413)
     if not validate_filetype(file):
         abort(415)
 
-    filename = read_filename(file)
+    filename = req.read_filename(file)
     target_dir = find_attatchments_dir(base_dir)
-    filepath = save_file(target_dir, file)
+    filepath = fileio.save_file(target_dir, file)
     if os.path.exists(filepath):
         abort(409)
 
@@ -230,26 +232,27 @@ def post_file(document_id):
 
 
 @bp.route('/documents/<int:document_id>', methods=['PUT'])
-def put_file(document_id):
+def put_document_file(document_id):
     '''
     update file of a document
     '''
+    file_id = postgres.get_file_id(document_id)
     result_file = postgres.get_filepath(file_id)
     if result_file is None:
         abort(404)
 
     body = request.get_json()
-    file = read_file(body)
+    file = fileio.read_file(body)
     if not validate_filesize(file, limit_filesize):
         abort(413)
     if not validate_filetype(file):
         abort(415)
 
     target_dir = find_attatchments_dir(base_dir)
-    filepath = save_file(target_dir, file)
+    filepath = fileio.save_file(target_dir, file)
 
-    delete_file(filepath)
-    filepath = save_file(target_dir, file)
+    fileio.delete_file(filepath)
+    filepath = fileio.save_file(target_dir, file)
 
     result_file = postgres.update_file(file_id, filepath)
     if result_file is None:
@@ -259,21 +262,24 @@ def put_file(document_id):
 
 
 @bp.route('/documents/<int:document_id>', methods=['DELETE'])
-def delete_file(document_id):
+def delete_document(document_id):
     '''
     delete file of a document
     '''
+    file_id = postgres.get_file_id(document_id)
     filepath = postgres.get_filepath(file_id)
     if filepath is None:
         abort(404)
+    fileio.delete_file(filepath)
 
-    result_file = postgres.delete_file(file_id)
-    if result_file is None:
+    # result_file = postgres.delete_file(file_id)
+    # if result_file is None:
+    #     abort(500)
+
+    # result_metadata = postgres.delete_metadata(file_id)
+    # if result_metadata is None:
+    #     abort(500)
+
+    if postgres.delete_document(document_id) is False:
         abort(500)
-
-    result_metadata = postgres.delete_metadata(file_id)
-    if result_metadata is None:
-        abort(500)
-
-    delete_file(filepath)
     return Response(status=200)

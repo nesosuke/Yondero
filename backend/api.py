@@ -18,7 +18,7 @@ CORS(api)
 
 bp = Blueprint('api', __name__, url_prefix='/api/v1')
 
-base_dir = 'attachments'
+base_dir = '/data/attachments'
 limit_filesize = 50*1024*1024
 allowed_extensions = ['pdf', 'doc', 'docx', 'md', 'txt', 'ppt', 'pptx']
 document_type = ['article', 'book', 'booklet', 'conference', 'inbook', 'incollection', 'inproceedings',

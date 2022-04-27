@@ -1,7 +1,4 @@
-import os
-from typing_extensions import Literal
 import psycopg2
-from werkzeug.security import generate_password_hash, check_password_hash
 
 db_config = {
     'host': 'db',
@@ -14,271 +11,302 @@ conn = psycopg2.connect(**db_config)
 
 
 def init_db():
-    # create db: metadata,attatchment,users
+    # create db: documents, metadata, files
     with conn.cursor() as cur:
         cur.execute('''
         CREATE TABLE IF NOT EXISTS metadata (
-            item_id serial PRIMARY KEY NOT NULL,
-            user_id serial NOT NULL,
+            metadata_id SERIAL PRIMARY KEY,
+            document_type TEXT,
             title TEXT NOT NULL,
-            type TEXT,
-            authors TEXT,
+            authors TEXT[],
             year INTEGER,
             journal TEXT,
             volume TEXT,
             issue TEXT,
             pages TEXT,
-            doi TEXT,
-            url TEXT,
             abstract TEXT,
-            keywords TEXT,
-            tags TEXT,
-            note TEXT,
-            file_id serial UNIQUE,
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        )
+            doi TEXT,
+            url TEXT
+            )   
         ''')
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS attatchments (
-            file_id serial PRIMARY KEY NOT NULL,
-            item_id serial NOT NULL,
+        CREATE TABLE IF NOT EXISTS files (
+            file_id SERIAL PRIMARY KEY,
             filepath TEXT
-        )
+            )
         ''')
         cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            user_id serial PRIMARY KEY NOT NULL,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        )
+        CREATE TABLE IF NOT EXISTS documents (
+            document_id SERIAL PRIMARY KEY,
+            metadata_id INTEGER REFERENCES metadata(metadata_id),
+            file_id INTEGER REFERENCES files(file_id),
+            created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            )
         ''')
+
         conn.commit()
 
 
-def find_file_id(user_id: int, item_id: int) -> int | Literal['not found']:
+def metadata_to_dict(metadata: list) -> dict:
     '''
-    DB metadata からfile_idを探す -> int
+    Convert metadata list to dictionary
+    '''
+    metadata_dict = {
+        'metadata_id': metadata[0],
+        'document_type': metadata[1],
+        'title': metadata[2],
+        'authors': metadata[3],
+        'year': metadata[4],
+        'journal': metadata[5],
+        'volume': metadata[6],
+        'issue': metadata[7],
+        'pages': metadata[8],
+        'abstract': metadata[9],
+        'doi': metadata[10],
+        'url': metadata[11]
+    }
+    del metadata_dict['metadata_id']
+    return metadata_dict
+
+# handle documents table
+
+
+def add_document(metadata_id: int) -> int:
+    '''
+    Create a new document record in Table: documents
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT file_id FROM metadata WHERE (user_id=%s AND item_id=%s)
-        ''', (user_id, item_id))
+        INSERT INTO documents (metadata_id) VALUES (%s)
+        RETURNING document_id
+        ''', (metadata_id,))
+        document_id = cur.fetchone()[0]
+        conn.commit()
+    return document_id
+
+
+def get_metadata_id(document_id: int) -> int:
+    '''
+    Get metadata_id of a document by document_id from Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT metadata_id FROM documents WHERE document_id = %s
+        ''', (document_id,))
+        data = cur.fetchone()
+        if data is None:
+            return None
+        metadata_id = data[0]
+        return metadata_id
+
+
+def get_file_id(document_id: int) -> int:
+    '''
+    Get file_id of a document by document_id from Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT file_id FROM documents WHERE document_id = %s
+        ''', (document_id,))
+        data = cur.fetchone()
+        if data is None:
+            return None
+        file_id = data[0]
+        return file_id
+
+
+def update_file_id(document_id: int, file_id: int) -> bool:
+    '''
+    Update file_id of a document by document_id in Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        UPDATE documents SET file_id = %s
+        WHERE document_id = %s
+        RETURNING file_id
+        ''', (file_id, document_id))
+        conn.commit()
+        file_id = cur.fetchone()[0]
+        if file_id is not None:
+            return True
+        else:
+            return False
+
+
+def update_metadata_id(document_id: int, metadata_id: int) -> bool:
+    '''
+    Update metadata_id of a document by document_id in Table: documents
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        UPDATE documents SET metadata_id = %s
+        WHERE document_id = %s
+        RETURNING metadata_id
+        ''', (metadata_id, document_id))
+        conn.commit()
+        metadata_id = cur.fetchone()[0]
+        if metadata_id is not None:
+            return True
+        else:
+            return False
+
+
+# handle metadata table
+
+
+def get_metadata(metadata_id: int) -> dict:
+    '''
+    Get metadata of a document by document_id from Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT * FROM metadata WHERE metadata_id = %s
+        ''', (metadata_id,))
         res = cur.fetchone()
-    if res is None:
-        return "not found"
-    file_id = res[0]
-    return file_id
+        if res is None:
+            return None
+        metadata = metadata_to_dict(res)
+        return metadata
 
 
-def find_file_path(file_id: int) -> str | Literal['not found']:
+def get_all_metadata():
     '''
-    DB attatchments からfilepathを探す -> str
+    Get all metadata records from Table: metadata
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT filepath FROM attatchments WHERE (file_id=%s)
+        SELECT * FROM metadata
+        ''')
+        data = cur.fetchall()
+        metadata_list = [metadata_to_dict(datum) for datum in data]
+        # TODO　FIXME: metadataに document_id を追加する
+        return metadata_list
+
+
+def add_metadata(metadata: dict) -> int:
+    '''
+    Create a new metadata record in Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        INSERT INTO metadata (document_type, title, authors, year, journal, volume, issue, pages, abstract, doi, url)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING metadata_id
+        ''', (metadata['document_type'], metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['abstract'], metadata['doi'], metadata['url']))
+        metadata_id = cur.fetchone()[0]
+        conn.commit()
+    return metadata_id
+
+
+def update_metadata(metadata_id, metadata):
+    '''
+    Update metadata record of a document by metadata_id in Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        UPDATE metadata SET document_type = %s, title = %s, authors = %s, year = %s, journal = %s, volume = %s, issue = %s, pages = %s, abstract = %s, doi = %s, url = %s
+        WHERE metadata_id = %s
+        ''', (metadata['document_type'], metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['abstract'], metadata['doi'], metadata['url'], metadata_id))
+        conn.commit()
+    return metadata_id
+
+
+def delete_metadata(metadata_id):
+    '''
+    Delete metadata record of a document by metadata_id in Table: metadata
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        DELETE FROM metadata WHERE metadata_id = %s
+        ''', (metadata_id,))
+        conn.commit()
+        cur.execute('''
+        SELECT * FROM metadata WHERE metadata_id = %s
+        ''', (metadata_id,))
+        metadata = cur.fetchone()
+        if metadata is None:
+            return True
+        else:
+            return False
+
+
+# handle files table
+def get_filepath(file_id):
+    '''
+    Get filepath of a file by file_id from Table: files
+    '''
+    with conn.cursor() as cur:
+        cur.execute('''
+        SELECT filepath FROM files WHERE file_id = %s
         ''', (file_id,))
-        res = cur.fetchone()
-    if res is None:
-        return "not found"
-    filepath = res[0]
+        if cur.fetchone() is None:
+            return None
+        filepath = cur.fetchone()[0]
     return filepath
 
 
-def find_metadata(user_id: int, item_id: int) -> dict | Literal['not found']:
+def add_file(filepath: str) -> int:
     '''
-    DB metadata からmetadataを探す -> dict
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        SELECT * FROM metadata WHERE (user_id=%s AND item_id=%s)
-        ''', (user_id, item_id))
-        res = cur.fetchone()
-    if res is None:
-        return "not found"
-    metadata = dict(zip(res[0].keys(), res[0]))
-    del metadata['file_id']
-    return metadata
-
-
-def add_metadata(user_id: int, metadata: dict) -> int | Literal['not found']:
-    '''
-    DB metadata にmetadataを挿入 -> int
+    Create a new file record in Table: files
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        INSERT INTO metadata (user_id,title,authors,year,journal,volume,issue,pages,doi,url,abstract,keywords,tags,note) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        RETURNING item_id
-        ''', (user_id, metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note']))
-        res = cur.fetchone()[0]
+        INSERT INTO files (filepath)
+        VALUES (%s)
+        RETURNING file_id
+        ''', (filepath,))
+        file_id = cur.fetchone()[0]
         conn.commit()
-    if res is None:
-        return "not found"
-    item_id = res
-    return item_id
+    return file_id
 
 
-def update_metadata(user_id: int, item_id: int, metadata: dict) -> int | Literal['not found']:
+def update_file(file_id, filepath):
     '''
-    DB metadata にmetadataを更新 -> int
+    Update file record of a document by file_id in Table: files
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        UPDATE metadata SET title=%s,authors=%s,year=%s,journal=%s,volume=%s,issue=%s,pages=%s,doi=%s,url=%s,abstract=%s,keywords=%s,tags=%s,note=%s 
-        WHERE (user_id=%s AND item_id=%s)
-        RETURNING item_id
-        ''', (metadata['title'], metadata['authors'], metadata['year'], metadata['journal'], metadata['volume'], metadata['issue'], metadata['pages'], metadata['doi'], metadata['url'], metadata['abstract'], metadata['keywords'], metadata['tags'], metadata['note'], user_id, item_id))
-        res = cur.fetchone()[0]
+        UPDATE files SET filepath = %s
+        WHERE file_id = %s
+        ''', (filepath, file_id))
         conn.commit()
-    if res is None:
-        return "not found"
-    item_id = res
-    return item_id
+    return file_id
 
 
-def find_user_id(username: str) -> int | Literal['not found']:
+def delete_file(file_id):
     '''
-    DB users からuser_idを探す -> int
+    Delete file record of a document by file_id in Table: files
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        SELECT user_id FROM users WHERE (username=%s)
-        ''', (username,))
-        res = cur.fetchone()
-    if res is None:
-        return 'not found'
-    user_id = res[0]
-    return user_id
-
-
-def find_username(user_id: int) -> str | Literal['not found']:
-    '''
-    DB users からusernameを探す -> str
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        SELECT username FROM users WHERE (user_id=%s)
-        ''', (user_id,))
-        res = cur.fetchone()
-    if res is None:
-        return 'not found'
-    username = res[0]
-    return username
-
-
-def find_password(user_id: int) -> str | Literal['not found']:
-    '''
-    DB users からpasswordを探す -> str
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        SELECT password FROM users WHERE (user_id =%s)
-        ''', (user_id,))
-        res = cur.fetchone()
-    if res is None:
-        return 'not found'
-    password = res[0]
-    return password
-
-
-def add_user(username: str, password: str) -> int | Literal['something went wrong']:
-    '''
-    DB users にユーザーを作成 -> int
-    '''
-    password_hash = generate_password_hash(password)
-    with conn.cursor() as cur:
-        try:
-            cur.execute('''
-            INSERT INTO users (username,password) VALUES (%s,%s)
-            RETURNING user_id
-            ''', (username, password_hash))
-            res = cur.fetchone()[0]
-            conn.commit()
-        except:
-            return 'something went wrong'
-    if res is None:
-        return 'something went wrong'
-    user_id = res
-    return user_id
-
-
-def is_valid_user(username: str, password: str) -> bool:
-    '''
-    # 将来的（認証の難しさによる）
-    DB users からusernameとpasswordが一致するか確認 -> bool
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        SELECT password FROM users WHERE (username=%s)
-        ''', (username,))
-        res = cur.fetchone()
-    if res is None:
-        return False
-    password_hash = res[0]
-    return check_password_hash(password_hash, password)
-
-
-def find_item_id(file_id: int) -> int | Literal['not found']:
-    '''
-    DB metadata からitem_idを探す -> int
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        SELECT item_id FROM metadata WHERE (file_id=%s)
+        DELETE FROM files WHERE file_id = %s
         ''', (file_id,))
-        res = cur.fetchone()
-    if res is None:
-        return 'not found'
-    item_id = res[0]
-    return item_id
-
-
-def add_file(user_id: int, item_id: int, filepath: str) -> int | Literal['something went wrong']:
-    '''
-    DB files にファイルを挿入 -> file_id
-    '''
-    with conn.cursor() as cur:
-        cur.execute('''
-        INSERT INTO files (user_id,item_id,filepath) VALUES (%s,%s,%s)
-        RETURNING file_id
-        ''', (user_id, item_id, filepath))
-        res = cur.fetchone()[0]
         conn.commit()
-    if res is None:
-        return 'something went wrong'
-    file_id = res
-    return file_id
+        cur.execute('''
+        SELECT * FROM files WHERE file_id = %s
+        ''', (file_id,))
+        file = cur.fetchone()
+        if file is None:
+            return True
+        else:
+            return False
 
 
-def replace_file(user_id: int, item_id: int, filepath: str) -> int | Literal['something went wrong']:
+# delete
+def delete_document(document_id):
     '''
-    DB attatchments にファイルを挿入 -> item_id
+    Delete document record of a document by document_id in Table: documents
     '''
     with conn.cursor() as cur:
         cur.execute('''
-        UPDATE attatchments SET filepath=%s 
-        WHERE user_id=%s AND item_id=%s
-        RETURNING file_id
-        ''', (filepath, user_id, item_id))
-        res = cur.fetchone()[0]
+        DELETE FROM documents WHERE document_id = %s
+        ''', (document_id,))
         conn.commit()
-    if res is None:
-        return 'something went wrong'
-    file_id = res
-    return file_id
-
-
-def find_all_metadata(user_id: int) -> list | Literal['not found']:
-    '''
-    DB metadata から全てのmetadataを探す -> list
-    '''
-    with conn.cursor() as cur:
         cur.execute('''
-        SELECT * FROM metadata WHERE (user_id=%s)
-        ''', (user_id,))
-        res = cur.fetchall()
-    if res is None:
-        return 'not found'
-    metadata_list = [dict(zip(row[0].keys(), row[0])) for row in res]
-    return metadata_list
+        SELECT * FROM documents WHERE document_id = %s
+        ''', (document_id,))
+        document = cur.fetchone()
+        if document is None:
+            return True
+        else:
+            return False

@@ -29,10 +29,10 @@ paths:
           $ref: "#/components/responses/internal_server_error"
     post:
       tags:
-        - Handle Document or/and Metadata
-      description: Upload a new document or/and Create a new metadata.
+        - Handle Document Metadata
+      description: Create a new metadata.
       requestBody:
-        $ref: "#/components/requestBodies/document"
+        $ref: "#/components/requestBodies/metadata"
       responses:
         201:
           $ref: "#/components/responses/created"
@@ -61,6 +61,27 @@ paths:
           $ref: "#/components/responses/not_found"
         500:
           $ref: "#/components/responses/internal_server_error"
+    post:
+      tags:
+        - Handle Document File
+      description: Upload a new document file
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      requestBody:
+        $ref: "#/components/requestBodies/file"
+      responses:
+        201:
+          $ref: "#/components/responses/created"
+        400:
+          $ref: "#/components/responses/bad_request"
+        409:
+          $ref: "#/components/responses/conflict"
+        413:
+          $ref: "#/components/responses/payload_too_large"
+        415:
+          $ref: "#/components/responses/unsupported_media_type"
+        500:
+          $ref: "#/components/responses/internal_server_error"
     put:
       tags:
         - Handle Document File
@@ -68,7 +89,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/document_id"
       requestBody:
-        $ref: "#/components/requestBodies/document"
+        $ref: "#/components/requestBodies/file"
       responses:
         200:
           $ref: "#/components/responses/success"
@@ -95,7 +116,7 @@ paths:
           $ref: "#/components/responses/not_found"
         500:
           $ref: "#/components/responses/internal_server_error"
-  /documents/{document_id}/metadata:
+  /documents/{document_id}:
     get:
       tags:
         - Handle Document Metadata
@@ -107,25 +128,6 @@ paths:
           $ref: "#/components/responses/success"
         404:
           $ref: "#/components/responses/not_found"
-        500:
-          $ref: "#/components/responses/internal_server_error"
-    post:
-      tags:
-        - Handle Document Metadata
-      description: Create a new metadata of an existing document
-      parameters:
-        - $ref: "#/components/parameters/document_id"
-      requestBody:
-        $ref: "#/components/requestBodies/metadata"
-      responses:
-        201:
-          $ref: "#/components/responses/created"
-        400:
-          $ref: "#/components/responses/bad_request"
-        404:
-          $ref: "#/components/responses/not_found"
-        409:
-          $ref: "#/components/responses/conflict"
         500:
           $ref: "#/components/responses/internal_server_error"
     put:
@@ -141,6 +143,19 @@ paths:
           $ref: "#/components/responses/success"
         400:
           $ref: "#/components/responses/bad_request"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    delete:
+      tags:
+        - Handle Document Metadata
+      description: Delete a metadata of an existing document
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
         404:
           $ref: "#/components/responses/not_found"
         500:
@@ -170,23 +185,17 @@ components:
       schema:
         $ref: "#/components/schemas/document_id"
   requestBodies:
-    document:
+    file:
       content:
-        multipart/related:
+        application/json:
           schema:
-            $ref: "#/components/schemas/document+metadata"
+            $ref: "#/components/schemas/file"
     metadata:
       description: Article metadata
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/metadata"
-    document+metadata:
-      description: Document metadata and file
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/document+metadata"
 
   responses:
     success:
@@ -251,8 +260,11 @@ components:
             $ref: "#/components/schemas/internal_server_error"
 
   schemas:
-    # document component
+    document_id:
+      type: integer
+      example: 1
 
+    # document component
     document_type:
       type: string
       example: "article"
@@ -300,24 +312,13 @@ components:
     file:
       type: string
       format: binary
-    attachment_id:
-      type: integer
-      example: 1D
-
-    document_id:
-      type: integer
-      example: 1
-
-    document:
-      type: string
-      format: binary
 
     metadata:
       type: object
       properties:
         doi:
           $ref: "#/components/schemas/doi"
-        article_type:
+        document_type:
           $ref: "#/components/schemas/document_type"
         title:
           $ref: "#/components/schemas/title"
@@ -344,13 +345,6 @@ components:
         tags:
           $ref: "#/components/schemas/tags"
 
-    document+metadata:
-      type: object
-      properties:
-        document:
-          $ref: "#/components/schemas/document"
-        metadata:
-          $ref: "#/components/schemas/metadata"
     # HTTP status codes
     success:
       type: object

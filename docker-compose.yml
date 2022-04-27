@@ -4,9 +4,7 @@ services:
     image: postgres:14.2
     restart: always
     volumes:
-      - ./db_data:/var/lib/postgresql/data
-      - ./attatchmnents:/data/attatchments
-      - ./logs:/app/logs
+      - ./data/db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
@@ -24,6 +22,7 @@ services:
     restart: always
     volumes:
       - ./logs:/app/logs
+      - ./data/attatchmnents:/data/attatchments
     ports:
       - "8080:8080"
     depends_on:

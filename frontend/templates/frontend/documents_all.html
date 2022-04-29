@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Documents All - Yondero</title>
+    <title>Documents All</title>
 </head>
 
 <body>
@@ -11,6 +11,45 @@
     <p>
         This is a documents all page.
     </p>
+
+    <div id="documents"></div>
+
+    <script>
+        const api_url = 'http://localhost:8080/api/v1';
+
+        async function get_all_documents() {
+            await fetch(api_url + '/documents')
+                .then(response => response.json())
+                .then(json => {
+                    const documents = json;
+
+                    let html = `  
+                <table>
+                    <tr>
+                        <th>title</th>
+                        <th>authors</th>
+                </tr>
+                `
+                    documents.forEach(document => {
+                        html += `
+                        <tr>
+                            <td>${document.title}</td>
+                            <td>${document.authors}</td>
+                        </tr>
+                        `
+                    });
+                    html += `
+                </table>
+                `
+                    console.log(html);
+
+                    document.getElementById('documents').innerHTML = html;
+                });
+        }
+
+        get_all_documents();
+    </script>
+
 </body>
 
 </html>

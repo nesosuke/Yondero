@@ -1,6 +1,5 @@
 # main.py
 from fastapi import FastAPI
-from pydantic import BaseModel
 
 from modules import database
 
@@ -10,7 +9,8 @@ from modules.models import Item, Body
 app = FastAPI()
 
 origins = [
-    "http://localhost",
+    "http://localhost/api",
+    "http://localhost:8000/api",
 ]
 
 
@@ -32,19 +32,18 @@ def get_item(item_id):
     return result
 
 
-@app.post("/items")
-def post_item(body: Body):
+@app.post("/items", response_model=Item)
+def post_item(item: Item):
     '''
     register item
     '''
-    item = body.item.dict()
 
     result = database.register_item(item)
 
     return result
 
 
-@app.put("/items")
+@app.put("/items", response_model=Body)
 def put_item(body: Body):
     '''
     update item
@@ -55,7 +54,7 @@ def put_item(body: Body):
     return database.update_item(item_id, item)
 
 
-@app.delete("/items")
+@app.delete("/items", response_model=Body)
 def delete_item(body: Body):
     '''
     delete item

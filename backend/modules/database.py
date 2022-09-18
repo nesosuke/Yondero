@@ -29,7 +29,9 @@ def register_item(item: dict) -> int:
     '''
     register item
     '''
-    item_id = collection.insert_one(item).inserted_id
+    result = collection.insert_one(item)
+    item_id = find_item(result.inserted_id)['id']
+
     return {'success': 'item registered', 'id': item_id}
 
 

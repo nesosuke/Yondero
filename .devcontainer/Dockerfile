@@ -6,4 +6,3 @@ RUN apt-get update && apt-get -y install --no-install-recommends python3-pip
 RUN pip3 install poetry
 
 WORKDIR /workspace
-RUN touch .bash_history && chown ${USERNAME} .bash_history

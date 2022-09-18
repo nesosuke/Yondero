@@ -1,6 +1,14 @@
 from pydantic import BaseModel
 
+
 class Item(BaseModel):
+    '''
+    Item={
+        "entry_type": "article",
+        "title": "title",
+        }
+    '''
+
     entry_type: str
     title: str
     author: str | None = None
@@ -15,5 +23,9 @@ class Item(BaseModel):
 
 
 class Body(BaseModel):
+    '''
+    Body={item_id: int, item: Item}
+    '''
+
     item_id: int | None = None
     item: Item

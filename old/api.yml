@@ -1,0 +1,424 @@
+openapi: "3.0.0"
+info:
+  title: "Yondero API"
+  version: "0.0.1"
+
+servers:
+  - url: "http://localhost:8080/api/v1"
+
+paths:
+  /:
+    get:
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+
+  /documents:
+    get:
+      tags:
+        - Handle Document Metadata
+      description: "Get all metadata of documents"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    post:
+      tags:
+        - Handle Document Metadata
+      description: Create a new metadata.
+      requestBody:
+        $ref: "#/components/requestBodies/metadata"
+      responses:
+        201:
+          $ref: "#/components/responses/created"
+        400:
+          $ref: "#/components/responses/bad_request"
+        409:
+          $ref: "#/components/responses/conflict"
+        413:
+          $ref: "#/components/responses/payload_too_large"
+        415:
+          $ref: "#/components/responses/unsupported_media_type"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+
+  /documents/{document_id}/file:
+    get:
+      tags:
+        - Handle Document File
+      description: Download a document file
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    post:
+      tags:
+        - Handle Document File
+      description: Upload a new document file
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      requestBody:
+        $ref: "#/components/requestBodies/file"
+      responses:
+        201:
+          $ref: "#/components/responses/created"
+        400:
+          $ref: "#/components/responses/bad_request"
+        409:
+          $ref: "#/components/responses/conflict"
+        413:
+          $ref: "#/components/responses/payload_too_large"
+        415:
+          $ref: "#/components/responses/unsupported_media_type"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    put:
+      tags:
+        - Handle Document File
+      description: Update a document file
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      requestBody:
+        $ref: "#/components/requestBodies/file"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          $ref: "#/components/responses/bad_request"
+        404:
+          $ref: "#/components/responses/not_found"
+        413:
+          $ref: "#/components/responses/payload_too_large"
+        415:
+          $ref: "#/components/responses/unsupported_media_type"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    delete:
+      tags:
+        - Handle Document File
+      description: Delete a document file
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+  /documents/{document_id}:
+    get:
+      tags:
+        - Handle Document Metadata
+      description: Fetch metadata of a document
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    put:
+      tags:
+        - Handle Document Metadata
+      description: Update a metadata of an existing document
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      requestBody:
+        $ref: "#/components/requestBodies/metadata"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        400:
+          $ref: "#/components/responses/bad_request"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+    delete:
+      tags:
+        - Handle Document Metadata
+      description: Delete a metadata of an existing document
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+  /documents/{document_id}/bibtex:
+    get:
+      tags:
+        - Handle BibTeX
+      description: Fetch bibtex of a document
+      parameters:
+        - $ref: "#/components/parameters/document_id"
+      responses:
+        200:
+          $ref: "#/components/responses/success"
+        404:
+          $ref: "#/components/responses/not_found"
+        500:
+          $ref: "#/components/responses/internal_server_error"
+
+components:
+  parameters:
+    document_id:
+      in: path
+      name: document_id
+      required: true
+      description: ID of the document
+      schema:
+        $ref: "#/components/schemas/document_id"
+  requestBodies:
+    file:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/file"
+    metadata:
+      description: Article metadata
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/metadata"
+
+  responses:
+    success:
+      description: "Success"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/success"
+    created:
+      description: "Created"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/created"
+    bad_request:
+      description: "Bad request"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/bad_request"
+    unauthorized:
+      description: "Unauthorized"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/unauthorized"
+    forbidden:
+      description: "Forbidden"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/forbidden"
+    not_found:
+      description: "Not found"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/not_found"
+    conflict:
+      description: "Conflict"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/conflict"
+    payload_too_large:
+      description: "Payload too large"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/payload_too_large"
+    unsupported_media_type:
+      description: "Unsupported media type"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/unsupported_media_type"
+    internal_server_error:
+      description: "Internal server error"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/internal_server_error"
+
+  schemas:
+    document_id:
+      type: integer
+      example: 1
+
+    # document component
+    document_type:
+      type: string
+      example: "article"
+    doi:
+      type: string
+      example: "10.2307/1969529"
+    title:
+      type: string
+      example: "Non-Cooperative Games"
+    authors:
+      type: array
+      items:
+        type: string
+        example: "John Nash"
+    journal:
+      type: string
+      example: "Annals of Mathematics"
+    volume:
+      type: string
+      example: "54"
+    issue:
+      type: string
+      example: "2"
+    pages:
+      type: string
+      example: "286--295"
+    year:
+      type: string
+      example: "1951"
+    abstract:
+      type: string
+      example: "This is an abstract"
+    keywords:
+      type: array
+      example: ["keyword1", "keyword2"]
+    note:
+      type: string
+      example: "This is a note"
+    tags:
+      type: array
+      example: ["tag1", "tag2"]
+    url:
+      type: string
+      example: "http://www.jstor.org/stable/1969529"
+    file:
+      type: string
+      format: binary
+
+    metadata:
+      type: object
+      properties:
+        doi:
+          $ref: "#/components/schemas/doi"
+        document_type:
+          $ref: "#/components/schemas/document_type"
+        title:
+          $ref: "#/components/schemas/title"
+        authors:
+          $ref: "#/components/schemas/authors"
+        journal:
+          $ref: "#/components/schemas/journal"
+        volume:
+          $ref: "#/components/schemas/volume"
+        issue:
+          $ref: "#/components/schemas/issue"
+        pages:
+          $ref: "#/components/schemas/pages"
+        year:
+          $ref: "#/components/schemas/year"
+        abstract:
+          $ref: "#/components/schemas/abstract"
+        keywords:
+          $ref: "#/components/schemas/keywords"
+        url:
+          $ref: "#/components/schemas/url"
+        note:
+          $ref: "#/components/schemas/note"
+        tags:
+          $ref: "#/components/schemas/tags"
+
+    # HTTP status codes
+    success:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Success"
+    created:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Created"
+    bad_request:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Bad Request"
+    unauthorized:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unauthorized"
+    forbidden:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Forbidden"
+    not_found:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Not Found"
+    conflict:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Conflict"
+    payload_too_large:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Payload too large"
+    unsupported_media_type:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Unsupported Media Type"
+    internal_server_error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Internal Server Error"
+    # Misc
+    bibtex:
+      example: |
+        "@article{10.2307/1969529,\n
+        ISSN = {0003486X},\n
+        URL = {http://www.jstor.org/stable/1969529},\n
+        author = {John Nash},\n
+        journal = {Annals of Mathematics},\n
+        number = {2},\n
+        pages = {286--295},\n
+        publisher = {Annals of Mathematics},\n
+        title = {Non-Cooperative Games},\n
+        urldate = {2022-04-19},\n
+        volume = {54},\n
+        year = {1951}\n
+        }"

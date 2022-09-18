@@ -21,6 +21,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     volumes:
+      - ./:/app
       - ./logs:/app/logs
       - ./data/attatchmnents:/data/attatchments
     ports:

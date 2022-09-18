@@ -1,0 +1,28 @@
+version: '3'
+services:
+  backend:
+    # Python 3.10
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    volumes:
+      - ./backend:/app/backend
+    restart: always
+    entrypoint: sh /app/backend/entrypoint.sh
+    depends_on:
+      - db
+
+  db:
+    # MongoDB
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - ./data:/data/db
+    environment:
+      # MONGO_INITDB_ROOT_USERNAME: root
+      # MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: yondero

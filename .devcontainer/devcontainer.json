@@ -17,10 +17,8 @@
         "streetsidesoftware.code-spell-checker",
         "oderwat.indent-rainbow",
         "christian-kohler.path-intellisense",
-        "esbenp.prettier-vscode",
-        "wakatime.vscode-wakatime"
+        "esbenp.prettier-vscode"
       ]
     }
   },
-  "remoteUser": "vscode"
 }

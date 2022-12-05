@@ -1,8 +1,10 @@
-FROM mcr.microsoft.com/vscode/devcontainers/python:3.10
+FROM python:3.10
 
-ARG USERNAME=vscode
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get -y install --no-install-recommends python3-pip
-RUN pip3 install poetry
-
+COPY ./ /workspace
 WORKDIR /workspace
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y \
+    python3-pip
+RUN pip install --upgrade pip
+RUN pip install poetry && poetry init -n

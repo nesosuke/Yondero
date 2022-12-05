@@ -3,23 +3,8 @@ version: '3'
 services:
   workspace:
     build:
-      context: ..
-      dockerfile: .devcontainer/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     command: sleep infinity
     volumes:
       - ../:/workspace
-
-  db:
-    image: mongo:latest
-    restart: unless-stopped
-    volumes:
-      - mongo-data:/data/db
-    ports:
-      - 27017:27017
-    environment:
-      # MONGO_INITDB_ROOT_USERNAME: root
-      # MONGO_INITDB_ROOT_PASSWORD: root
-      MONGO_INITDB_DATABASE: yondero
-
-volumes:
-  mongo-data:

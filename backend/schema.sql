@@ -1,6 +1,6 @@
 -- sqlite3 schema.sql --
-CREATE DATABASE IF NOT EXISTS items(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+CREATE TABLE IF NOT EXISTS entries(
+    entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
     address TEXT,
     annote TEXT,
     booktitle TEXT,
@@ -22,12 +22,12 @@ CREATE DATABASE IF NOT EXISTS items(
     school TEXT,
     series TEXT,
     title TEXT,
-    type TEXT,
+    entry_type TEXT,
     volume TEXT,
     year TEXT,
     url TEXT,
     filepath TEXT,
     filehash TEXT,
-    updated_at TEXT,
+    updated_at CURRENT_TIMESTAMP,
     created_at TEXT
 );

@@ -6,6 +6,10 @@ info:
   title: Yondero API for BibTeX
   description: Conform to the BibTeX format
   version: 1.0.0
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local server
+
 components:
   parameters:
     id:
@@ -107,8 +111,6 @@ components:
       type: string
     school:
       type: string
-    type:
-      type: string
     series:
       type: string
     title:
@@ -127,11 +129,16 @@ components:
       description: An article from a journal, magazine, newspaper, or periodical.
       type: object
       required:
+        - entry_type
         - author
         - title
         - journal
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - article
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -154,11 +161,16 @@ components:
       description: A book where the publisher is clearly identifiable.
       type: object
       required:
-        - author or editor
+        - entry_type
+        - author
         - title
         - publisher
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - book
         author:
           $ref: "#/components/schemas/author"
         editor:
@@ -185,8 +197,13 @@ components:
       description: A printed work that is bound, but does not have a clearly identifiable publisher or supporting institution.
       type: object
       required:
+        - entry_type
         - title
       properties:
+        entry_type:
+          type: string
+          enum:
+            - booklet
         title:
           $ref: "#/components/schemas/title"
         author:
@@ -205,11 +222,16 @@ components:
       description: An article that has been included in conference proceedings. See inproceedings for details.
       type: object
       required:
+        - entry_type
         - author
         - title
         - booktitle
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - conference
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -242,12 +264,17 @@ components:
       description: A section, such as a chapter, or a page range within a book.
       type: object
       required:
-        - author or editor
+        - entry_type
         - title
-        - chapter or pages
+        - pages
         - publisher
         - year
+        - author
       properties:
+        entry_type:
+          type: string
+          enum:
+            - inbook
         author:
           $ref: "#/components/schemas/author"
         editor:
@@ -268,8 +295,6 @@ components:
           $ref: "#/components/schemas/number"
         series:
           $ref: "#/components/schemas/series"
-        type:
-          $ref: "#/components/schemas/type"
         address:
           $ref: "#/components/schemas/address"
         edition:
@@ -285,9 +310,14 @@ components:
         - author
         - title
         - booktitle
+        - entry_type
         - publisher
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - incollection
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -306,8 +336,6 @@ components:
           $ref: "#/components/schemas/number"
         series:
           $ref: "#/components/schemas/series"
-        type:
-          $ref: "#/components/schemas/type"
         chapter:
           $ref: "#/components/schemas/chapter"
         pages:
@@ -324,11 +352,16 @@ components:
       description: A paper that has been published in conference proceedings. The usage of conference and inproceedings is the same. The conference entry was included for Scribe compatibility.
       type: object
       required:
+        - entry_type
         - author
         - title
         - booktitle
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - inproceedings
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -361,8 +394,13 @@ components:
       description: A technical manual for a machine software such as would come with a purchase to explain operation to the new owner.
       type: object
       required:
+        - entry_type
         - title
       properties:
+        entry_type:
+          type: string
+          enum:
+            - manual
         title:
           $ref: "#/components/schemas/title"
         author:
@@ -383,11 +421,16 @@ components:
       description: A thesis written for the Master’s level degree.
       type: object
       required:
+        - entry_type
         - author
         - title
         - school
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - mastersthesis
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -396,8 +439,6 @@ components:
           $ref: "#/components/schemas/school"
         year:
           $ref: "#/components/schemas/year"
-        type:
-          $ref: "#/components/schemas/type"
         address:
           $ref: "#/components/schemas/address"
         month:
@@ -407,7 +448,13 @@ components:
     misc:
       description: Used if none of the other entry types quite match the source. Frequently used to cite web pages, but can be anything from lecture slides to personal notes.
       type: object
+      required:
+        - entry_type
       properties:
+        entry_type:
+          type: string
+          enum:
+            - misc
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -425,10 +472,15 @@ components:
       type: object
       required:
         - author
+        - entry_type
         - title
         - school
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - phdthesis
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -437,8 +489,6 @@ components:
           $ref: "#/components/schemas/school"
         year:
           $ref: "#/components/schemas/year"
-        type:
-          $ref: "#/components/schemas/type"
         address:
           $ref: "#/components/schemas/address"
         month:
@@ -449,9 +499,14 @@ components:
       description: A conference proceeding.
       type: object
       required:
+        - entry_type
         - title
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - proceedings
         title:
           $ref: "#/components/schemas/title"
         year:
@@ -478,11 +533,16 @@ components:
       description: An institutionally published report such as a report from a school, a government organization, an organization, or a company. This entry type is also frequently used for white papers and working papers.
       type: object
       required:
+        - entry_type
         - author
         - title
         - institution
         - year
       properties:
+        entry_type:
+          type: string
+          enum:
+            - techreport
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -491,8 +551,6 @@ components:
           $ref: "#/components/schemas/institution"
         year:
           $ref: "#/components/schemas/year"
-        type:
-          $ref: "#/components/schemas/type"
         number:
           $ref: "#/components/schemas/number"
         address:
@@ -505,10 +563,15 @@ components:
       description: A document that has not been officially published such as a paper draft or manuscript in preparation.
       type: object
       required:
+        - entry_type
         - author
         - title
         - note
       properties:
+        entry_type:
+          type: string
+          enum:
+            - unpublished
         author:
           $ref: "#/components/schemas/author"
         title:
@@ -520,9 +583,25 @@ components:
         year:
           $ref: "#/components/schemas/year"
     entry:
+      oneOf:
+        - $ref: "#/components/schemas/article"
+        - $ref: "#/components/schemas/book"
+        - $ref: "#/components/schemas/booklet"
+        - $ref: "#/components/schemas/conference"
+        - $ref: "#/components/schemas/inbook"
+        - $ref: "#/components/schemas/incollection"
+        - $ref: "#/components/schemas/inproceedings"
+        - $ref: "#/components/schemas/manual"
+        - $ref: "#/components/schemas/mastersthesis"
+        - $ref: "#/components/schemas/misc"
+        - $ref: "#/components/schemas/phdthesis"
+        - $ref: "#/components/schemas/proceedings"
+        - $ref: "#/components/schemas/techreport"
+        - $ref: "#/components/schemas/unpublished"
+    entryList:
       type: array
       items:
-        oneOf:
+        anyOf:
           - $ref: "#/components/schemas/article"
           - $ref: "#/components/schemas/book"
           - $ref: "#/components/schemas/booklet"
@@ -537,10 +616,6 @@ components:
           - $ref: "#/components/schemas/proceedings"
           - $ref: "#/components/schemas/techreport"
           - $ref: "#/components/schemas/unpublished"
-    entryList:
-      type: array
-      items:
-        $ref: "#/components/schemas/entry"
     searchQuery:
       type: object
       properties:
@@ -575,6 +650,9 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/entryList"
+        404:
+          $ref: "#/components/responses/NotFound"
+
     post:
       summary: Add a new entry
       operationId: addEntry

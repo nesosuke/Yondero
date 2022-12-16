@@ -1,0 +1,697 @@
+# OpenAPI v3
+# in schemas, define the entry types of BibTeX
+# c.f. https://www.bibtex.com/e/entry-types/
+openapi: 3.0.0
+info:
+  title: Yondero API for BibTeX
+  description: Conform to the BibTeX format
+  version: 1.0.0
+components:
+  parameters:
+    id:
+      name: id
+      in: path
+      description: ID of entry to return
+      required: true
+      schema:
+        type: string
+  requestBodies:
+    searchQuery:
+      description: Search query
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/searchQuery"
+    uploadFile:
+      description: File to upload
+      content:
+        application/octet-stream:
+          schema:
+            $ref: "#/components/schemas/file"
+  responses:
+    Success:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/entry"
+    Created:
+      description: Created
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/entry"
+    NoContent:
+      description: No Content
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    PayloadTooLarge:
+      description: Payload Too Large
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+  schemas:
+    # fields: https://www.bibtex.com/format/fields/
+    address:
+      type: string
+    annote:
+      type: string
+    booktitle:
+      type: string
+    chapter:
+      type: string
+    doi:
+      type: string
+    edition:
+      type: string
+    editor:
+      type: string
+    author:
+      type: string
+    howpublished:
+      type: string
+    institution:
+      type: string
+    issn:
+      type: string
+    journal:
+      type: string
+    month:
+      type: string
+    note:
+      type: string
+    number:
+      type: string
+    organization:
+      type: string
+    pages:
+      type: string
+    publisher:
+      type: string
+    school:
+      type: string
+    type:
+      type: string
+    series:
+      type: string
+    title:
+      type: string
+    url:
+      type: string
+    volume:
+      type: string
+    year:
+      type: string
+    file:
+      type: string
+      format: binary
+    # entry types: https://www.bibtex.com/e/entry-types/
+    article:
+      description: An article from a journal, magazine, newspaper, or periodical.
+      type: object
+      required:
+        - author
+        - title
+        - journal
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        journal:
+          $ref: "#/components/schemas/journal"
+        year:
+          $ref: "#/components/schemas/year"
+        volume:
+          $ref: "#/components/schemas/volume"
+        number:
+          $ref: "#/components/schemas/number"
+        pages:
+          $ref: "#/components/schemas/pages"
+        month:
+          $ref: "#/components/schemas/month"
+        note:
+          $ref: "#/components/schemas/note"
+    book:
+      description: A book where the publisher is clearly identifiable.
+      type: object
+      required:
+        - author or editor
+        - title
+        - publisher
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        editor:
+          $ref: "#/components/schemas/editor"
+        title:
+          $ref: "#/components/schemas/title"
+        publisher:
+          $ref: "#/components/schemas/publisher"
+        year:
+          $ref: "#/components/schemas/year"
+        number:
+          $ref: "#/components/schemas/number"
+        series:
+          $ref: "#/components/schemas/series"
+        address:
+          $ref: "#/components/schemas/address"
+        edition:
+          $ref: "#/components/schemas/edition"
+        month:
+          $ref: "#/components/schemas/month"
+        note:
+          $ref: "#/components/schemas/note"
+    booklet:
+      description: A printed work that is bound, but does not have a clearly identifiable publisher or supporting institution.
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          $ref: "#/components/schemas/title"
+        author:
+          $ref: "#/components/schemas/author"
+        howpublished:
+          $ref: "#/components/schemas/howpublished"
+        address:
+          $ref: "#/components/schemas/address"
+        month:
+          $ref: "#/components/schemas/month"
+        year:
+          $ref: "#/components/schemas/year"
+        note:
+          $ref: "#/components/schemas/note"
+    conference:
+      description: An article that has been included in conference proceedings. See inproceedings for details.
+      type: object
+      required:
+        - author
+        - title
+        - booktitle
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        booktitle:
+          $ref: "#/components/schemas/booktitle"
+        year:
+          $ref: "#/components/schemas/year"
+        editor:
+          $ref: "#/components/schemas/editor"
+        volume:
+          $ref: "#/components/schemas/volume"
+        number:
+          $ref: "#/components/schemas/number"
+        series:
+          $ref: "#/components/schemas/series"
+        pages:
+          $ref: "#/components/schemas/pages"
+        address:
+          $ref: "#/components/schemas/address"
+        month:
+          $ref: "#/components/schemas/month"
+        organization:
+          $ref: "#/components/schemas/organization"
+        publisher:
+          $ref: "#/components/schemas/publisher"
+        note:
+          $ref: "#/components/schemas/note"
+    inbook:
+      description: A section, such as a chapter, or a page range within a book.
+      type: object
+      required:
+        - author or editor
+        - title
+        - chapter or pages
+        - publisher
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        editor:
+          $ref: "#/components/schemas/editor"
+        title:
+          $ref: "#/components/schemas/title"
+        chapter:
+          $ref: "#/components/schemas/chapter"
+        pages:
+          $ref: "#/components/schemas/pages"
+        publisher:
+          $ref: "#/components/schemas/publisher"
+        year:
+          $ref: "#/components/schemas/year"
+        volume:
+          $ref: "#/components/schemas/volume"
+        number:
+          $ref: "#/components/schemas/number"
+        series:
+          $ref: "#/components/schemas/series"
+        type:
+          $ref: "#/components/schemas/type"
+        address:
+          $ref: "#/components/schemas/address"
+        edition:
+          $ref: "#/components/schemas/edition"
+        month:
+          $ref: "#/components/schemas/month"
+        note:
+          $ref: "#/components/schemas/note"
+    incollection:
+      description: A titled section of a book. Such as a short story within the larger collection of short stories that make up the book.
+      type: object
+      required:
+        - author
+        - title
+        - booktitle
+        - publisher
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        booktitle:
+          $ref: "#/components/schemas/booktitle"
+        publisher:
+          $ref: "#/components/schemas/publisher"
+        year:
+          $ref: "#/components/schemas/year"
+        editor:
+          $ref: "#/components/schemas/editor"
+        volume:
+          $ref: "#/components/schemas/volume"
+        number:
+          $ref: "#/components/schemas/number"
+        series:
+          $ref: "#/components/schemas/series"
+        type:
+          $ref: "#/components/schemas/type"
+        chapter:
+          $ref: "#/components/schemas/chapter"
+        pages:
+          $ref: "#/components/schemas/pages"
+        address:
+          $ref: "#/components/schemas/address"
+        edition:
+          $ref: "#/components/schemas/edition"
+        month:
+          $ref: "#/components/schemas/month"
+        note:
+          $ref: "#/components/schemas/note"
+    inproceedings:
+      description: A paper that has been published in conference proceedings. The usage of conference and inproceedings is the same. The conference entry was included for Scribe compatibility.
+      type: object
+      required:
+        - author
+        - title
+        - booktitle
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        booktitle:
+          $ref: "#/components/schemas/booktitle"
+        year:
+          $ref: "#/components/schemas/year"
+        editor:
+          $ref: "#/components/schemas/editor"
+        volume:
+          $ref: "#/components/schemas/volume"
+        number:
+          $ref: "#/components/schemas/number"
+        series:
+          $ref: "#/components/schemas/series"
+        pages:
+          $ref: "#/components/schemas/pages"
+        address:
+          $ref: "#/components/schemas/address"
+        month:
+          $ref: "#/components/schemas/month"
+        organization:
+          $ref: "#/components/schemas/organization"
+        publisher:
+          $ref: "#/components/schemas/publisher"
+        note:
+          $ref: "#/components/schemas/note"
+    manual:
+      description: A technical manual for a machine software such as would come with a purchase to explain operation to the new owner.
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          $ref: "#/components/schemas/title"
+        author:
+          $ref: "#/components/schemas/author"
+        organization:
+          $ref: "#/components/schemas/organization"
+        address:
+          $ref: "#/components/schemas/address"
+        edition:
+          $ref: "#/components/schemas/edition"
+        month:
+          $ref: "#/components/schemas/month"
+        year:
+          $ref: "#/components/schemas/year"
+        note:
+          $ref: "#/components/schemas/note"
+    mastersthesis:
+      description: A thesis written for the Master’s level degree.
+      type: object
+      required:
+        - author
+        - title
+        - school
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        school:
+          $ref: "#/components/schemas/school"
+        year:
+          $ref: "#/components/schemas/year"
+        type:
+          $ref: "#/components/schemas/type"
+        address:
+          $ref: "#/components/schemas/address"
+        month:
+          $ref: "#/components/schemas/month"
+        note:
+          $ref: "#/components/schemas/note"
+    misc:
+      description: Used if none of the other entry types quite match the source. Frequently used to cite web pages, but can be anything from lecture slides to personal notes.
+      type: object
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        howpublished:
+          $ref: "#/components/schemas/howpublished"
+        month:
+          $ref: "#/components/schemas/month"
+        year:
+          $ref: "#/components/schemas/year"
+        note:
+          $ref: "#/components/schemas/note"
+    phdthesis:
+      description: A thesis written for the PhD level degree.
+      type: object
+      required:
+        - author
+        - title
+        - school
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        school:
+          $ref: "#/components/schemas/school"
+        year:
+          $ref: "#/components/schemas/year"
+        type:
+          $ref: "#/components/schemas/type"
+        address:
+          $ref: "#/components/schemas/address"
+        month:
+          $ref: "#/components/schemas/month"
+        note:
+          $ref: "#/components/schemas/note"
+    proceedings:
+      description: A conference proceeding.
+      type: object
+      required:
+        - title
+        - year
+      properties:
+        title:
+          $ref: "#/components/schemas/title"
+        year:
+          $ref: "#/components/schemas/year"
+        editor:
+          $ref: "#/components/schemas/editor"
+        volume:
+          $ref: "#/components/schemas/volume"
+        number:
+          $ref: "#/components/schemas/number"
+        series:
+          $ref: "#/components/schemas/series"
+        address:
+          $ref: "#/components/schemas/address"
+        month:
+          $ref: "#/components/schemas/month"
+        organization:
+          $ref: "#/components/schemas/organization"
+        publisher:
+          $ref: "#/components/schemas/publisher"
+        note:
+          $ref: "#/components/schemas/note"
+    techreport:
+      description: An institutionally published report such as a report from a school, a government organization, an organization, or a company. This entry type is also frequently used for white papers and working papers.
+      type: object
+      required:
+        - author
+        - title
+        - institution
+        - year
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        institution:
+          $ref: "#/components/schemas/institution"
+        year:
+          $ref: "#/components/schemas/year"
+        type:
+          $ref: "#/components/schemas/type"
+        number:
+          $ref: "#/components/schemas/number"
+        address:
+          $ref: "#/components/schemas/address"
+        month:
+          $ref: "#/components/schemas/month"
+        note:
+          $ref: "#/components/schemas/note"
+    unpublished:
+      description: A document that has not been officially published such as a paper draft or manuscript in preparation.
+      type: object
+      required:
+        - author
+        - title
+        - note
+      properties:
+        author:
+          $ref: "#/components/schemas/author"
+        title:
+          $ref: "#/components/schemas/title"
+        note:
+          $ref: "#/components/schemas/note"
+        month:
+          $ref: "#/components/schemas/month"
+        year:
+          $ref: "#/components/schemas/year"
+    entry:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/article"
+          - $ref: "#/components/schemas/book"
+          - $ref: "#/components/schemas/booklet"
+          - $ref: "#/components/schemas/conference"
+          - $ref: "#/components/schemas/inbook"
+          - $ref: "#/components/schemas/incollection"
+          - $ref: "#/components/schemas/inproceedings"
+          - $ref: "#/components/schemas/manual"
+          - $ref: "#/components/schemas/mastersthesis"
+          - $ref: "#/components/schemas/misc"
+          - $ref: "#/components/schemas/phdthesis"
+          - $ref: "#/components/schemas/proceedings"
+          - $ref: "#/components/schemas/techreport"
+          - $ref: "#/components/schemas/unpublished"
+    entryList:
+      type: array
+      items:
+        $ref: "#/components/schemas/entry"
+    searchQuery:
+      type: object
+      properties:
+        query:
+          type: string
+    error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    success:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+
+paths:
+  /entry:
+    get:
+      summary: Get all entries
+      operationId: getEntryList
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/entryList"
+    post:
+      summary: Add a new entry
+      operationId: addEntry
+      requestBody:
+        description: Entry to add
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/entry"
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+        400:
+          $ref: "#/components/responses/BadRequest"
+
+  /entry/{id}:
+    get:
+      summary: Get an entry
+      operationId: getEntry
+      parameters:
+        - name: id
+          $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Update an entry
+      operationId: updateEntry
+      parameters:
+        - name: id
+          $ref: "#/components/parameters/id"
+      requestBody:
+        description: Entry to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/entry"
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+    delete:
+      summary: Delete an entry
+      operationId: deleteEntry
+      parameters:
+        - name: id
+          $ref: "#/components/parameters/id"
+      responses:
+        204:
+          $ref: "#/components/responses/NoContent"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+
+  /entry/{id}/file:
+    get:
+      summary: Get a file
+      operationId: getFile
+      parameters:
+        - name: id
+          $ref: "#/components/parameters/id"
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+    put:
+      summary: Update a file
+      operationId: updateFile
+      parameters:
+        - name: id
+          $ref: "#/components/parameters/id"
+      requestBody:
+        $ref: "#/components/requestBodies/uploadFile"
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+        413:
+          $ref: "#/components/responses/PayloadTooLarge"
+    delete:
+      summary: Delete a file
+      operationId: deleteFile
+      parameters:
+        - name: id
+          $ref: "#/components/parameters/id"
+      responses:
+        204:
+          $ref: "#/components/responses/NoContent"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        404:
+          $ref: "#/components/responses/NotFound"
+
+  /search:
+    post:
+      summary: Search entries
+      operationId: searchEntries
+      requestBody:
+        $ref: "#/components/requestBodies/searchQuery"
+      responses:
+        200:
+          $ref: "#/components/responses/Success"
+        400:
+          $ref: "#/components/responses/BadRequest"

@@ -13,12 +13,14 @@
         "ms-python.vscode-pylance",
         "ms-python.pylint",
         "github.copilot",
-        "github.vscode-pull-request-github",
         "streetsidesoftware.code-spell-checker",
         "oderwat.indent-rainbow",
         "christian-kohler.path-intellisense",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "Arjun.swagger-viewer",
+        "njpwerner.autodocstring",
+        "donjayamanne.python-environment-manager"
       ]
     }
-  },
+  }
 }
